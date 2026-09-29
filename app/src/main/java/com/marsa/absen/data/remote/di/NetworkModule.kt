@@ -1,6 +1,6 @@
 package com.marsa.absen.di
 
-import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.marsa.absen.data.remote.ApiConfig
 import com.marsa.absen.data.remote.AuthInterceptor
 import com.marsa.absen.data.remote.MarsaApi
