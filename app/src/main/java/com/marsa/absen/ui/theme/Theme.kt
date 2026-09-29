@@ -3,9 +3,7 @@ package com.marsa.absen.ui.theme
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialExpressiveTheme
-import androidx.compose.material3.MotionScheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -55,7 +53,6 @@ private fun ColorScheme.toAmoled(): ColorScheme = copy(
     surfaceContainerHighest = Color(0xFF1F1F1F)
 )
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MarsaTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -79,9 +76,8 @@ fun MarsaTheme(
     }
     if (darkTheme && amoled) scheme = scheme.toAmoled()
 
-    MaterialExpressiveTheme(
+    MaterialTheme(
         colorScheme = scheme,
-        motionScheme = MotionScheme.expressive(),
         shapes = MarsaShapes,
         typography = MarsaTypography,
         content = content
