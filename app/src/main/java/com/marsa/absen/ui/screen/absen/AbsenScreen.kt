@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,7 +25,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -48,7 +48,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,10 +56,8 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -110,7 +107,6 @@ fun AbsenScreen(
         )
     }
 
-    // Cek ulang saat kembali dari pengaturan
     LifecycleResumeEffect(Unit) {
         granted = hasPermissions()
         onPauseOrDispose { }
@@ -118,7 +114,6 @@ fun AbsenScreen(
     LaunchedEffect(Unit) { if (!granted) requestPermissions() }
     LaunchedEffect(granted) { if (granted) vm.start(request) }
 
-    // Bersihkan state saat layar benar-benar ditutup (bukan sekadar rotasi layar)
     DisposableEffect(Unit) {
         onDispose {
             if (activity?.isChangingConfigurations != true) vm.reset()
@@ -150,9 +145,11 @@ fun AbsenScreen(
             Text(title, style = MaterialTheme.typography.titleLarge)
         }
 
-        Box(modifier = Modifier
-            .weight(1f)
-            .fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
             if (!granted) {
                 PermissionContent(
                     onRequest = requestPermissions,
@@ -183,15 +180,21 @@ fun AbsenScreen(
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        LocationBanner(state, request.profil.namaLokasi)
-                        CameraCapture(
-                            onPhoto = vm::onPhotoCaptured,
-                            onFailure = vm::onCameraError,
+                        LocationBanner(state)
+                        Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxWidth()
-                                .clip(MaterialTheme.shapes.extraLarge)
-                        )
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CameraCapture(
+                                onPhoto = vm::onPhotoCaptured,
+                                onFailure = vm::onCameraError,
+                                modifier = Modifier
+                                    .aspectRatio(3f / 4f)
+                                    .clip(MaterialTheme.shapes.extraLarge)
+                            )
+                        }
                         if (state.message != null) {
                             Text(
                                 text = state.message,
@@ -279,52 +282,54 @@ private fun LocationErrorContent(
             tint = MaterialTheme.colorScheme.error
         )
         Text(
-            text = state.message ?: "Lokasi tidak dapat diverifikasi.",
+            text = state.problem ?: "Lokasi tidak dapat diverifikasi.",
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center
         )
-        if (state.distance != null) {
-            val radius = state.radius?.let { " (maks. ${it.roundToInt()} m)" } ?: ""
+        if (state.problemJarak != null) {
             Text(
-                text = "Jarak kamu ±${state.distance.roundToInt()} m dari ${namaLokasi ?: "lokasi absen"}$radius",
+                text = "Jarak kamu ±${state.problemJarak} m dari ${namaLokasi ?: "lokasi absen"}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
         }
         Button(onClick = onRetry) { Text("Cek ulang") }
-        RawDetail(state.cekRaw)
     }
 }
 
 @Composable
-private fun LocationBanner(state: AbsenUiState, namaLokasi: String?) {
+private fun LocationBanner(state: AbsenUiState) {
+    val loc = state.loc
     Card(
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer
         )
     ) {
-        Column(modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Icon(Icons.Filled.LocationOn, contentDescription = null)
-                Column {
-                    Text("Lokasi terverifikasi", style = MaterialTheme.typography.titleMedium)
-                    val info = buildList {
-                        state.distance?.let { add("±${it.roundToInt()} m dari ${namaLokasi ?: "lokasi absen"}") }
-                        state.accuracy?.let { add("akurasi ±${it.roundToInt()} m") }
-                    }.joinToString(" • ")
-                    if (info.isNotEmpty()) {
-                        Text(info, style = MaterialTheme.typography.bodyMedium)
-                    }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(Icons.Filled.LocationOn, contentDescription = null)
+            Column {
+                Text(
+                    text = loc?.message ?: "Lokasi terverifikasi",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                val info = listOfNotNull(
+                    loc?.jarak?.let { "jarak ±$it m" },
+                    loc?.radius?.let { "radius $it m" },
+                    loc?.accuracy?.let { "akurasi ±${it.roundToInt()} m" },
+                    if (state.verifying) "memperbarui…" else null
+                ).joinToString(" • ")
+                if (info.isNotEmpty()) {
+                    Text(info, style = MaterialTheme.typography.bodyMedium)
                 }
             }
-            RawDetail(state.cekRaw)
         }
     }
 }
@@ -351,8 +356,7 @@ private fun ReviewContent(
         Box(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth()
-                .clip(MaterialTheme.shapes.extraLarge),
+                .fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
             val bmp = bitmap
@@ -361,7 +365,9 @@ private fun ReviewContent(
                     bitmap = bmp,
                     contentDescription = "Foto absen",
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .aspectRatio(3f / 4f)
+                        .clip(MaterialTheme.shapes.extraLarge)
                 )
             } else {
                 CircularProgressIndicator()
@@ -415,32 +421,25 @@ private fun DoneContent(
             textAlign = TextAlign.Center
         )
         if (state.success) {
-            Button(onClick = onFinish, modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)) { Text("Selesai") }
+            Button(
+                onClick = onFinish,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            ) { Text("Selesai") }
         } else {
-            Button(onClick = onRetry, modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)) { Text("Coba lagi") }
-            OutlinedButton(onClick = onFinish, modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)) { Text("Tutup") }
-        }
-        RawDetail(state.resultRaw)
-    }
-}
-
-/** Sementara: menampilkan JSON asli dari server agar model datanya bisa disesuaikan. */
-@Composable
-private fun RawDetail(raw: String?) {
-    if (raw == null) return
-    var open by rememberSaveable { mutableStateOf(false) }
-    TextButton(onClick = { open = !open }) {
-        Text(if (open) "Sembunyikan detail respons" else "Detail respons server (sementara)")
-    }
-    if (open) {
-        SelectionContainer {
-            Text(text = raw, fontFamily = FontFamily.Monospace, fontSize = 11.sp)
+            Button(
+                onClick = onRetry,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            ) { Text("Coba lagi") }
+            OutlinedButton(
+                onClick = onFinish,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            ) { Text("Tutup") }
         }
     }
 }
