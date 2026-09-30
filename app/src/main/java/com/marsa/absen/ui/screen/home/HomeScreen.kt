@@ -50,17 +50,24 @@ import com.marsa.absen.util.lateMinutes
 import com.marsa.absen.util.toHhmm
 import com.marsa.absen.util.todayLabel
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.LaunchedEffect
+import com.marsa.absen.domain.model.AbsenMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onLogout: () -> Unit,
+    onAbsen: (AbsenMode, PegawaiProfil) -> Unit,
+    refreshKey: Int = 0,
     vm: HomeViewModel = hiltViewModel()
 ) {
     val state = vm.state
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var confirmLogout by rememberSaveable { mutableStateOf(false) }
+        LaunchedEffect(refreshKey) {
+        if (refreshKey > 0) vm.refresh()
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
@@ -89,8 +96,13 @@ fun HomeScreen(
                     state = state,
                     profil = profil,
                     onLogoutClick = { confirmLogout = true },
-                    onAbsenClick = {
-                        scope.launch { snackbar.showSnackbar("Fitur absen dibuat di Tahap 4") }
+                        onAbsenClick = {
+                        val mode = if (state.status == AbsenStatus.BELUM_MASUK) {
+                            AbsenMode.MASUK
+                        } else {
+                            AbsenMode.KELUAR
+                        }
+                        onAbsen(mode, profil)
                     }
                 )
             }
