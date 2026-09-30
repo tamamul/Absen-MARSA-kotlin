@@ -42,12 +42,16 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Row
 
 @Composable
 fun LoginScreen(vm: LoginViewModel = hiltViewModel()) {
     var login by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var showPassword by rememberSaveable { mutableStateOf(false) }
+    var rememberPassword by rememberSaveable { mutableStateOf(false) }
 
     val state = vm.state
     val focus = LocalFocusManager.current
@@ -60,12 +64,14 @@ fun LoginScreen(vm: LoginViewModel = hiltViewModel()) {
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .safeDrawingPadding(),
-        contentAlignment = Alignment.Center
-    ) {
+Box(
+    modifier = Modifier
+        .fillMaxSize()
+        .safeDrawingPadding()
+        .imePadding(),
+    contentAlignment = Alignment.Center
+)
+    {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -162,6 +168,23 @@ fun LoginScreen(vm: LoginViewModel = hiltViewModel()) {
                     modifier = Modifier.fillMaxWidth()
                 )
             }
+
+            Row(
+    modifier = Modifier
+        .fillMaxWidth()
+        .padding(top = 2.dp),
+    verticalAlignment = Alignment.CenterVertically
+) {
+    Checkbox(
+        checked = rememberPassword,
+        onCheckedChange = { rememberPassword = it }
+    )
+
+    Text(
+        text = "Ingat saya",
+        style = MaterialTheme.typography.bodyMedium
+    )
+}
 
             Button(
                 onClick = { submit() },
