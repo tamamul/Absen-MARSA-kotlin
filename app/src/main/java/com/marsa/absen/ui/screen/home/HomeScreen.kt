@@ -63,6 +63,7 @@ import com.marsa.absen.util.todayLabel
 import kotlinx.coroutines.delay
 import java.time.LocalTime
 import androidx.compose.foundation.layout.WindowInsets
+import com.marsa.absen.ui.components.Avatar
 
 private val PERMISSIONS = arrayOf(
     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -286,19 +287,8 @@ private fun ProfileCard(profil: PegawaiProfil) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Surface(
-                shape = MaterialTheme.shapes.extraLarge,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(56.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = profil.nama.initials(),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
+            Avatar(nama = profil.nama, foto = profil.foto, size = 56.dp)
+            
             Column {
                 Text(profil.nama ?: "-", style = MaterialTheme.typography.titleMedium)
                 Text(
