@@ -70,6 +70,7 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.play.services.location)
+    implementation(libs.mlkit.face.detection)
 }
 
 kotlin {
