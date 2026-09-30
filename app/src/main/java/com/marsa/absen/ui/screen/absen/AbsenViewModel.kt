@@ -1,11 +1,8 @@
 package com.marsa.absen.ui.screen.absen
 
-import android.content.Context
-import android.location.LocationManager
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.core.location.LocationManagerCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.marsa.absen.data.remote.ApiResult
@@ -13,18 +10,13 @@ import com.marsa.absen.data.remote.serverMessage
 import com.marsa.absen.data.remote.serverStatus
 import com.marsa.absen.data.repository.AbsenRepository
 import com.marsa.absen.data.repository.AuthRepository
+import com.marsa.absen.data.repository.LocationVerifier
 import com.marsa.absen.domain.model.AbsenMode
 import com.marsa.absen.domain.model.AbsenRequest
-import com.marsa.absen.util.compressPhoto
-import com.marsa.absen.util.currentLocation
-import com.marsa.absen.util.distanceMeters
-import com.marsa.absen.util.isFake
+import com.marsa.absen.domain.model.LocationCheck
+import com.marsa.absen.util.preparePortraitPhoto
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
 import java.io.File
 import javax.inject.Inject
 
@@ -32,22 +24,19 @@ enum class AbsenStep { LOCATING, LOCATION_ERROR, CAMERA, REVIEW, SUBMITTING, DON
 
 data class AbsenUiState(
     val step: AbsenStep = AbsenStep.LOCATING,
-    val lat: Double? = null,
-    val lng: Double? = null,
-    val accuracy: Float? = null,
-    val distance: Float? = null,
-    val radius: Double? = null,
+    val loc: LocationCheck.Inside? = null,
+    val problem: String? = null,
+    val problemJarak: Int? = null,
+    val verifying: Boolean = false,
     val photo: File? = null,
     val message: String? = null,
-    val success: Boolean = false,
-    val cekRaw: String? = null,
-    val resultRaw: String? = null
+    val success: Boolean = false
 )
 
 @HiltViewModel
 class AbsenViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val repo: AbsenRepository,
+    private val verifier: LocationVerifier,
     private val auth: AuthRepository
 ) : ViewModel() {
 
@@ -56,13 +45,21 @@ class AbsenViewModel @Inject constructor(
 
     private var request: AbsenRequest? = null
     private var started = false
-    private val pretty = Json { prettyPrint = true }
 
     fun start(req: AbsenRequest) {
         if (started) return
         started = true
         request = req
-        locate()
+
+        val pre = req.pre
+        if (pre != null && pre.isFresh()) {
+            // Lokasi sudah terverifikasi di beranda: langsung tampilkan kamera,
+            // sambil memperbarui lokasi di latar belakang.
+            state = AbsenUiState(step = AbsenStep.CAMERA, loc = pre, verifying = true)
+            viewModelScope.launch { applyResult(verifier.verify(), silent = true) }
+        } else {
+            locate()
+        }
     }
 
     /** Dipanggil saat layar absen benar-benar ditutup. */
@@ -74,77 +71,52 @@ class AbsenViewModel @Inject constructor(
     }
 
     fun locate() {
-        val req = request ?: return
         viewModelScope.launch {
             state = AbsenUiState(step = AbsenStep.LOCATING)
+            applyResult(verifier.verify(), silent = false)
+        }
+    }
 
-            val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            if (!LocationManagerCompat.isLocationEnabled(lm)) {
-                state = AbsenUiState(
-                    step = AbsenStep.LOCATION_ERROR,
-                    message = "Lokasi HP sedang mati. Aktifkan GPS lalu coba lagi."
-                )
-                return@launch
+    private fun applyResult(r: LocationCheck, silent: Boolean) {
+        when (r) {
+            is LocationCheck.Inside -> {
+                val next = if (state.step == AbsenStep.LOCATING ||
+                    state.step == AbsenStep.LOCATION_ERROR
+                ) AbsenStep.CAMERA else state.step
+                state = state.copy(loc = r, verifying = false, problem = null, step = next)
             }
 
-            val loc = withTimeoutOrNull(20_000) { context.currentLocation() }
-            if (loc == null) {
-                state = AbsenUiState(
+            is LocationCheck.Problem -> {
+                // Pembaruan senyap yang gagal karena GPS/jaringan tidak mengganggu pengguna;
+                // server tetap memvalidasi saat absen dikirim.
+                if (silent && !r.outside) {
+                    state = state.copy(verifying = false)
+                    return
+                }
+                if (state.step == AbsenStep.SUBMITTING || state.step == AbsenStep.DONE) return
+                state = state.copy(
                     step = AbsenStep.LOCATION_ERROR,
-                    message = "Gagal mendapatkan lokasi. Pastikan GPS aktif dan sinyal baik, lalu coba lagi."
+                    problem = r.message,
+                    problemJarak = r.jarak,
+                    verifying = false
                 )
-                return@launch
-            }
-            if (loc.isFake) {
-                state = AbsenUiState(
-                    step = AbsenStep.LOCATION_ERROR,
-                    message = "Terdeteksi lokasi palsu (mock location). Matikan aplikasi lokasi palsu lalu coba lagi."
-                )
-                return@launch
             }
 
-            val tLat = req.profil.latitude?.toDoubleOrNull()
-            val tLng = req.profil.longitude?.toDoubleOrNull()
-            val distance = if (tLat != null && tLng != null) {
-                distanceMeters(loc.latitude, loc.longitude, tLat, tLng)
-            } else null
-
-            val base = AbsenUiState(
-                lat = loc.latitude,
-                lng = loc.longitude,
-                accuracy = loc.accuracy,
-                distance = distance,
-                radius = req.profil.radius?.toDoubleOrNull()
+            LocationCheck.NoPermission -> state = state.copy(
+                step = AbsenStep.LOCATION_ERROR,
+                problem = "Izin lokasi belum diberikan.",
+                verifying = false
             )
 
-            when (val cek = repo.cekLokasi(loc.latitude, loc.longitude)) {
-                is ApiResult.Error -> {
-                    if (cek.code == 401) {
-                        auth.logout()
-                        return@launch
-                    }
-                    state = base.copy(step = AbsenStep.LOCATION_ERROR, message = cek.message)
-                }
+            LocationCheck.Unauthorized -> viewModelScope.launch { auth.logout() }
 
-                is ApiResult.Success -> {
-                    val raw = pretty.encodeToString(JsonElement.serializer(), cek.data)
-                    state = if (cek.data.serverStatus() == false) {
-                        base.copy(
-                            step = AbsenStep.LOCATION_ERROR,
-                            message = cek.data.serverMessage() ?: "Lokasi di luar area absen.",
-                            cekRaw = raw
-                        )
-                    } else {
-                        base.copy(step = AbsenStep.CAMERA, cekRaw = raw)
-                    }
-                }
-            }
+            else -> Unit
         }
     }
 
     fun onPhotoCaptured(file: File) {
         viewModelScope.launch {
-            val processed = compressPhoto(file)
+            val processed = preparePortraitPhoto(file)
             state = state.copy(step = AbsenStep.REVIEW, photo = processed, message = null)
         }
     }
@@ -165,12 +137,11 @@ class AbsenViewModel @Inject constructor(
     fun submit() {
         val req = request ?: return
         val photo = state.photo ?: return
-        val lat = state.lat ?: return
-        val lng = state.lng ?: return
+        val loc = state.loc ?: return
 
         viewModelScope.launch {
             state = state.copy(step = AbsenStep.SUBMITTING, message = null)
-            when (val r = repo.kirim(req.mode, lat, lng, photo)) {
+            when (val r = repo.kirim(req.mode, loc.lat, loc.lng, photo)) {
                 is ApiResult.Success -> {
                     val ok = r.data.serverStatus() != false
                     val defaultOk =
@@ -179,8 +150,7 @@ class AbsenViewModel @Inject constructor(
                         step = AbsenStep.DONE,
                         success = ok,
                         message = r.data.serverMessage()
-                            ?: if (ok) defaultOk else "Absen ditolak oleh server.",
-                        resultRaw = pretty.encodeToString(JsonElement.serializer(), r.data)
+                            ?: if (ok) defaultOk else "Absen ditolak oleh server."
                     )
                 }
 
@@ -189,12 +159,7 @@ class AbsenViewModel @Inject constructor(
                         auth.logout()
                         return@launch
                     }
-                    state = state.copy(
-                        step = AbsenStep.DONE,
-                        success = false,
-                        message = r.message,
-                        resultRaw = null
-                    )
+                    state = state.copy(step = AbsenStep.DONE, success = false, message = r.message)
                 }
             }
         }
