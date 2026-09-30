@@ -178,46 +178,59 @@ fun AbsenScreen(
                         onRetry = vm::locate
                     )
 
-                                        AbsenStep.CAMERA -> Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        LocationBanner(state)
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            val cameraModifier = Modifier
-                                .aspectRatio(3f / 4f)
-                                .clip(MaterialTheme.shapes.extraLarge)
-                            if (manual) {
-                                CameraCapture(
-                                    onPhoto = vm::onPhotoCaptured,
-                                    onFailure = vm::onCameraError,
-                                    modifier = cameraModifier
-                                )
-                            } else {
-                                FaceCamera(
-                                    manualAllowed = request.profil.faceRequired != "1",
-                                    onPhoto = vm::onPhotoCaptured,
-                                    onFailure = vm::onCameraError,
-                                    onManual = { manual = true },
-                                    modifier = cameraModifier
-                                )
-                            }
-                        }
-                        if (state.message != null) {
-                            Text(
-                                text = state.message,
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
+                    AbsenStep.CAMERA -> Column(
+    modifier = Modifier
+        .fillMaxSize()
+        .padding(horizontal = 16.dp, vertical = 8.dp),
+    verticalArrangement = Arrangement.spacedBy(8.dp)
+) {
+    // =========================
+    // CAMERA + MONITOR
+    // =========================
+    Box(
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        val cameraModifier = Modifier
+            .fillMaxSize()
+            .clip(MaterialTheme.shapes.extraLarge)
+
+        if (manual) {
+            CameraCapture(
+                onPhoto = vm::onPhotoCaptured,
+                onFailure = vm::onCameraError,
+                modifier = cameraModifier
+            )
+        } else {
+            FaceCamera(
+                manualAllowed = request.profil.faceRequired != "1",
+                onPhoto = vm::onPhotoCaptured,
+                onFailure = vm::onCameraError,
+                onManual = { manual = true },
+                modifier = cameraModifier
+            )
+        }
+    }
+
+    // =========================
+    // INFO LOKASI — COMPACT
+    // =========================
+    LocationBanner(state)
+
+    // =========================
+    // PESAN ERROR
+    // =========================
+    if (state.message != null) {
+        Text(
+            text = state.message,
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(horizontal = 4.dp)
+        )
+    }
+}
                     AbsenStep.REVIEW -> ReviewContent(
                         state = state,
                         onRetake = vm::retake,
@@ -315,33 +328,55 @@ private fun LocationErrorContent(
 @Composable
 private fun LocationBanner(state: AbsenUiState) {
     val loc = state.loc
+
     Card(
-        shape = MaterialTheme.shapes.large,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 1.dp
         )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Icon(Icons.Filled.LocationOn, contentDescription = null)
-            Column {
+            Icon(
+                imageVector = Icons.Filled.LocationOn,
+                contentDescription = "Lokasi",
+                modifier = Modifier.size(22.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(1.dp)
+            ) {
                 Text(
                     text = loc?.message ?: "Lokasi terverifikasi",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleSmall
                 )
+
                 val info = listOfNotNull(
-                    loc?.jarak?.let { "jarak ±$it m" },
+                    loc?.jarak?.let { "±$it m" },
                     loc?.radius?.let { "radius $it m" },
-                    loc?.accuracy?.let { "akurasi ±${it.roundToInt()} m" },
+                    loc?.accuracy?.let {
+                        "akurasi ±${it.roundToInt()} m"
+                    },
                     if (state.verifying) "memperbarui…" else null
                 ).joinToString(" • ")
+
                 if (info.isNotEmpty()) {
-                    Text(info, style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        text = info,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
                 }
             }
         }
