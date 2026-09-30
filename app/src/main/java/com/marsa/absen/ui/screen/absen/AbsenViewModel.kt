@@ -19,8 +19,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
+import com.marsa.absen.util.QualityReport
+import com.marsa.absen.util.assessPhoto
 
-enum class AbsenStep { LOCATING, LOCATION_ERROR, CAMERA, REVIEW, SUBMITTING, DONE }
+enum class AbsenStep { LOCATING, LOCATION_ERROR, CAMERA, CHECKING, REVIEW, SUBMITTING, DONE }
 
 data class AbsenUiState(
     val step: AbsenStep = AbsenStep.LOCATING,
@@ -29,6 +31,7 @@ data class AbsenUiState(
     val problemJarak: Int? = null,
     val verifying: Boolean = false,
     val photo: File? = null,
+    val quality: QualityReport? = null,
     val message: String? = null,
     val success: Boolean = false
 )
@@ -114,20 +117,28 @@ class AbsenViewModel @Inject constructor(
         }
     }
 
-    fun onPhotoCaptured(file: File) {
+        fun onPhotoCaptured(file: File) {
         viewModelScope.launch {
+            state = state.copy(step = AbsenStep.CHECKING, message = null)
             val processed = preparePortraitPhoto(file)
-            state = state.copy(step = AbsenStep.REVIEW, photo = processed, message = null)
+            val report = assessPhoto(processed)
+            state = if (report.ok) {
+                state.copy(step = AbsenStep.REVIEW, photo = processed, quality = report, message = null)
+            } else {
+                processed.delete()
+                state.copy(
+                    step = AbsenStep.CAMERA,
+                    photo = null,
+                    quality = null,
+                    message = "Foto ditolak: " + report.problems.joinToString("; ") + ". Coba lagi."
+                )
+            }
         }
-    }
-
-    fun onCameraError(message: String) {
-        state = state.copy(message = message)
     }
 
     fun retake() {
         state.photo?.delete()
-        state = state.copy(step = AbsenStep.CAMERA, photo = null, message = null)
+        state = state.copy(step = AbsenStep.CAMERA, photo = null, quality = null, message = null)
     }
 
     fun backToReview() {
