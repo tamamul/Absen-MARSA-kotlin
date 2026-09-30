@@ -72,6 +72,7 @@ fun FaceCamera(
     val engine = remember { LivenessEngine() }
     var ui by remember { mutableStateOf(LivenessUi()) }
     val captureGuard = remember { AtomicBoolean(false) }
+
     var showMonitor by rememberSaveable { mutableStateOf(true) }
     var showManual by remember { mutableStateOf(false) }
 
@@ -81,38 +82,66 @@ fun FaceCamera(
     val cam = remember {
         LifecycleCameraController(context).apply {
             cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
-            setEnabledUseCases(CameraController.IMAGE_CAPTURE or CameraController.IMAGE_ANALYSIS)
-            imageAnalysisBackpressureStrategy = ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
+            setEnabledUseCases(
+                CameraController.IMAGE_CAPTURE or
+                    CameraController.IMAGE_ANALYSIS
+            )
+            imageAnalysisBackpressureStrategy =
+                ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
         }
     }
 
     DisposableEffect(lifecycleOwner) {
         val executor = Executors.newSingleThreadExecutor()
+
         val analyzer = FaceAnalyzer { metrics ->
-            val next = engine.onFrame(metrics, SystemClock.elapsedRealtime())
+            val next = engine.onFrame(
+                metrics,
+                SystemClock.elapsedRealtime()
+            )
+
             ui = next
-            if (next.readyToCapture && captureGuard.compareAndSet(false, true)) {
-                val file = File.createTempFile("absen_", ".jpg", context.cacheDir)
+
+            if (
+                next.readyToCapture &&
+                captureGuard.compareAndSet(false, true)
+            ) {
+                val file = File.createTempFile(
+                    "absen_",
+                    ".jpg",
+                    context.cacheDir
+                )
+
                 cam.takePicture(
                     ImageCapture.OutputFileOptions.Builder(file).build(),
                     ContextCompat.getMainExecutor(context),
                     object : ImageCapture.OnImageSavedCallback {
-                        override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+
+                        override fun onImageSaved(
+                            output: ImageCapture.OutputFileResults
+                        ) {
                             currentOnPhoto(file)
                         }
 
-                        override fun onError(exception: ImageCaptureException) {
+                        override fun onError(
+                            exception: ImageCaptureException
+                        ) {
                             file.delete()
                             captureGuard.set(false)
                             engine.reset()
-                            currentOnFailure("Gagal mengambil foto: ${exception.message}")
+
+                            currentOnFailure(
+                                "Gagal mengambil foto: ${exception.message}"
+                            )
                         }
                     }
                 )
             }
         }
+
         cam.setImageAnalysisAnalyzer(executor, analyzer)
         cam.bindToLifecycle(lifecycleOwner)
+
         onDispose {
             cam.clearImageAnalysisAnalyzer()
             cam.unbind()
@@ -121,13 +150,15 @@ fun FaceCamera(
         }
     }
 
-    // Tombol foto manual baru muncul setelah 25 detik (jika server mengizinkan)
+    // Tombol foto manual baru muncul setelah 25 detik
+    // jika server mengizinkan.
     LaunchedEffect(Unit) {
         delay(25_000)
         showManual = true
     }
 
     Box(modifier) {
+
         AndroidView(
             factory = { ctx ->
                 PreviewView(ctx).apply {
@@ -138,9 +169,16 @@ fun FaceCamera(
             modifier = Modifier.fillMaxSize()
         )
 
-        FaceOverlay(ui = ui, modifier = Modifier.fillMaxSize())
+        // Kotak tracking wajah saja.
+        // Oval panduan sudah dihapus.
+        FaceOverlay(
+            ui = ui,
+            modifier = Modifier.fillMaxSize()
+        )
 
-        // Atas: instruksi + tahap + progres keseluruhan
+        // =========================
+        // ATAS: INSTRUKSI + TAHAP
+        // =========================
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -149,12 +187,15 @@ fun FaceCamera(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+
             val headline = when (ui.phase) {
                 Phase.CHALLENGE ->
                     "${ui.challenge?.emoji.orEmpty()} ${ui.hint}" +
                         (ui.secondsLeft?.let { "  (${it}d)" } ?: "")
+
                 else -> ui.hint
             }
+
             Surface(
                 shape = RoundedCornerShape(20.dp),
                 color = Color.Black.copy(alpha = 0.55f)
@@ -164,9 +205,13 @@ fun FaceCamera(
                     color = Color.White,
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(
+                        horizontal = 16.dp,
+                        vertical = 8.dp
+                    )
                 )
             }
+
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = Color.Black.copy(alpha = 0.45f)
@@ -175,9 +220,13 @@ fun FaceCamera(
                     text = stageLabel(ui),
                     color = Color.White,
                     style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                    modifier = Modifier.padding(
+                        horizontal = 12.dp,
+                        vertical = 4.dp
+                    )
                 )
             }
+
             LinearProgressIndicator(
                 progress = { ui.overall },
                 modifier = Modifier
@@ -186,7 +235,9 @@ fun FaceCamera(
             )
         }
 
-        // Bawah: badge ekspresi, tombol, panel monitor
+        // =========================
+        // BAWAH: TOMBOL + MONITOR
+        // =========================
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -194,84 +245,156 @@ fun FaceCamera(
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            if (ui.metrics.faceCount > 0) {
-            
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = { showMonitor = !showMonitor }) {
-                    Text(if (showMonitor) "Sembunyikan monitor" else "Tampilkan monitor", color = Color.White)
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+
+                TextButton(
+                    onClick = {
+                        showMonitor = !showMonitor
+                    }
+                ) {
+                    Text(
+                        text = if (showMonitor) {
+                            "Sembunyikan monitor"
+                        } else {
+                            "Tampilkan monitor"
+                        },
+                        color = Color.White
+                    )
                 }
+
                 if (manualAllowed && showManual) {
                     TextButton(onClick = onManual) {
-                        Text("Foto manual", color = Color.White)
+                        Text(
+                            text = "Foto manual",
+                            color = Color.White
+                        )
                     }
                 }
             }
-            if (showMonitor) MonitorPanel(ui)
+
+            if (showMonitor) {
+                MonitorPanel(ui)
+            }
         }
     }
 }
 
-private fun stageLabel(ui: LivenessUi): String = when (ui.phase) {
-    Phase.ALIGN -> "Tahap 1/3 • Posisi wajah"
-    Phase.CHALLENGE -> "Tahap 2/3 • Tantangan liveness (percobaan ${ui.attempt})"
-    Phase.HOLD -> "Tahap 3/3 • Tahan posisi"
-    Phase.CAPTURING -> "Mengambil foto…"
-}
+private fun stageLabel(ui: LivenessUi): String =
+    when (ui.phase) {
+        Phase.ALIGN ->
+            "Tahap 1/3 • Posisi wajah"
+
+        Phase.CHALLENGE ->
+            "Tahap 2/3 • Tantangan liveness (percobaan ${ui.attempt})"
+
+        Phase.HOLD ->
+            "Tahap 3/3 • Tahan posisi"
+
+        Phase.CAPTURING ->
+            "Mengambil foto…"
+    }
 
 @Composable
-private fun FaceOverlay(ui: LivenessUi, modifier: Modifier = Modifier) {
+private fun FaceOverlay(
+    ui: LivenessUi,
+    modifier: Modifier = Modifier
+) {
     val good = Color(0xFF4CAF50)
     val warn = Color(0xFFFFC107)
+
     val color = when {
         ui.checks.allOk -> good
         ui.metrics.faceCount > 0 -> warn
         else -> Color.White
     }
+
     Canvas(modifier = modifier) {
-        // Kotak pelacak wajah; x dicerminkan karena pratinjau kamera depan berupa cermin
+
+        // Hanya kotak pelacak wajah.
+        // Oval panduan DIHAPUS.
         ui.metrics.box?.let { b ->
+
             val left = (1f - b.right) * size.width
             val right = (1f - b.left) * size.width
+
             drawRoundRect(
                 color = color.copy(alpha = 0.9f),
-                topLeft = Offset(left, b.top * size.height),
-                size = Size(right - left, (b.bottom - b.top) * size.height),
-                cornerRadius = CornerRadius(16.dp.toPx()),
-                style = Stroke(width = 2.dp.toPx())
+                topLeft = Offset(
+                    left,
+                    b.top * size.height
+                ),
+                size = Size(
+                    right - left,
+                    (b.bottom - b.top) * size.height
+                ),
+                cornerRadius = CornerRadius(
+                    16.dp.toPx()
+                ),
+                style = Stroke(
+                    width = 2.dp.toPx()
+                )
             )
         }
     }
 }
 
-private fun pct(v: Float?): String = v?.let { "${(it * 100).roundToInt()}%" } ?: "--"
+private fun pct(v: Float?): String =
+    v?.let {
+        "${(it * 100).roundToInt()}%"
+    } ?: "--"
 
 @Composable
 private fun MonitorPanel(ui: LivenessUi) {
+
     val m = ui.metrics
     val c = ui.checks
-    fun Boolean.mark() = if (this) "✓" else "✗"
+
+    fun Boolean.mark() =
+        if (this) "✓" else "✗"
 
     val lines = listOf(
-        "Wajah ${m.faceCount}${m.trackingId?.let { " (ID $it)" } ?: ""} • ${ui.fps} fps",
-        "Ukuran ${((m.box?.height ?: 0f) * 100).roundToInt()}% ${c.size.mark()}  " +
-            "Tengah ${c.centered.mark()}  Lurus ${c.frontal.mark()}",
-        "Mata ${c.eyesOpen.mark()}  Stabil ${c.stable.mark()}",
-        "Yaw ${m.yaw.roundToInt()}°  Pitch ${m.pitch.roundToInt()}°  Roll ${m.roll.roundToInt()}°",
-        "Mata kiri ${pct(m.leftEye)}  kanan ${pct(m.rightEye)}",
-        "Senyum ${pct(m.smile)}"
+        "Wajah ${m.faceCount}" +
+            "${m.trackingId?.let { " (ID $it)" } ?: ""}" +
+            " • ${ui.fps} fps",
+
+        "Ukuran ${((m.box?.height ?: 0f) * 100).roundToInt()}%" +
+            " ${c.size.mark()}  " +
+            "Tengah ${c.centered.mark()}  " +
+            "Lurus ${c.frontal.mark()}",
+
+        "Mata ${c.eyesOpen.mark()}  " +
+            "Stabil ${c.stable.mark()}",
+
+        "Yaw ${m.yaw.roundToInt()}°  " +
+            "Pitch ${m.pitch.roundToInt()}°  " +
+            "Roll ${m.roll.roundToInt()}°",
+
+        "Mata kiri ${pct(m.leftEye)}  " +
+            "kanan ${pct(m.rightEye)}"
     )
+
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = Color.Black.copy(alpha = 0.6f)
     ) {
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
+
             lines.forEach {
-                Text(text = it, color = Color.White, fontFamily = FontFamily.Monospace, fontSize = 8.sp)
+                Text(
+                    text = it,
+                    color = Color.White,
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 8.sp
+                )
             }
         }
     }
