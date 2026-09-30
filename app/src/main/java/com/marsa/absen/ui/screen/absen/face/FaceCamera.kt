@@ -206,208 +206,144 @@ fun FaceCamera(
      * Monitor berada DI LUAR area kamera.
      * Jadi monitor tidak menutupi wajah.
      */
-    Column(
-        modifier = modifier
+Column(
+    modifier = modifier
+) {
+
+    // =========================
+    // AREA KAMERA — UKURAN TETAP
+    // =========================
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(4f / 3f)
+            .clip(RoundedCornerShape(16.dp))
     ) {
 
-        /*
-         * ==================================================
-         * AREA KAMERA
-         * ==================================================
-         */
-        Box(
+        AndroidView(
+            factory = { ctx ->
+                PreviewView(ctx).apply {
+                    controller = cam
+                    scaleType = PreviewView.ScaleType.FILL_CENTER
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+
+        FaceOverlay(
+            ui = ui,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // =========================
+        // INSTRUKSI + TAHAP + PROGRESS
+        // =========================
+        Column(
             modifier = Modifier
+                .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .weight(1f)
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
-            AndroidView(
-                factory = { ctx ->
+            val headline =
+                when (ui.phase) {
+                    Phase.CHALLENGE ->
+                        ui.hint +
+                            (
+                                ui.secondsLeft?.let {
+                                    "  (${it}d)"
+                                } ?: ""
+                            )
 
-                    PreviewView(ctx).apply {
+                    else -> ui.hint
+                }
 
-                        controller = cam
-
-                        scaleType =
-                            PreviewView.ScaleType.FILL_CENTER
-                    }
-                },
-
-                modifier = Modifier.fillMaxSize()
-            )
-
-            /*
-             * Kotak tracking wajah.
-             *
-             * Oval panduan sudah dihapus.
-             */
-            FaceOverlay(
-                ui = ui,
-                modifier = Modifier.fillMaxSize()
-            )
-
-            /*
-             * ==================================================
-             * ATAS: INSTRUKSI + TAHAP + PROGRESS
-             * ==================================================
-             */
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .padding(12.dp),
-
-                horizontalAlignment =
-                    Alignment.CenterHorizontally,
-
-                verticalArrangement =
-                    Arrangement.spacedBy(8.dp)
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = Color.Black.copy(alpha = 0.55f)
             ) {
-
-                val headline =
-                    when (ui.phase) {
-
-                        Phase.CHALLENGE ->
-                            ui.hint +
-                                (
-                                    ui.secondsLeft
-                                        ?.let {
-                                            "  (${it}d)"
-                                        }
-                                        ?: ""
-                                )
-
-                        else ->
-                            ui.hint
-                    }
-
-                Surface(
-                    shape =
-                        RoundedCornerShape(20.dp),
-
-                    color =
-                        Color.Black.copy(alpha = 0.55f)
-                ) {
-
-                    Text(
-                        text = headline,
-
-                        color = Color.White,
-
-                        style =
-                            MaterialTheme.typography.titleMedium,
-
-                        textAlign =
-                            TextAlign.Center,
-
-                        modifier =
-                            Modifier.padding(
-                                horizontal = 16.dp,
-                                vertical = 8.dp
-                            )
+                Text(
+                    text = headline,
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(
+                        horizontal = 16.dp,
+                        vertical = 8.dp
                     )
-                }
-
-                Surface(
-                    shape =
-                        RoundedCornerShape(12.dp),
-
-                    color =
-                        Color.Black.copy(alpha = 0.45f)
-                ) {
-
-                    Text(
-                        text = stageLabel(ui),
-
-                        color = Color.White,
-
-                        style =
-                            MaterialTheme.typography.labelLarge,
-
-                        modifier =
-                            Modifier.padding(
-                                horizontal = 12.dp,
-                                vertical = 4.dp
-                            )
-                    )
-                }
-
-                LinearProgressIndicator(
-                    progress = {
-                        ui.overall
-                    },
-
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(CircleShape)
                 )
             }
-        }
 
-        /*
-         * ==================================================
-         * MONITOR
-         * ==================================================
-         *
-         * Monitor berada di bawah kamera.
-         * Tidak lagi overlay ke preview.
-         */
-        if (showMonitor) {
-            MonitorPanel(ui)
-        }
-
-        /*
-         * ==================================================
-         * TOMBOL
-         * ==================================================
-         */
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = 12.dp,
-                    vertical = 4.dp
-                ),
-
-            horizontalArrangement =
-                Arrangement.spacedBy(8.dp),
-
-            verticalAlignment =
-                Alignment.CenterVertically
-        ) {
-
-            TextButton(
-                onClick = {
-                    showMonitor = !showMonitor
-                }
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = Color.Black.copy(alpha = 0.45f)
             ) {
-
                 Text(
-                    text =
-                        if (showMonitor) {
-                            "Sembunyikan monitor"
-                        } else {
-                            "Tampilkan monitor"
-                        },
+                    text = stageLabel(ui),
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(
+                        horizontal = 12.dp,
+                        vertical = 4.dp
+                    )
+                )
+            }
 
+            LinearProgressIndicator(
+                progress = { ui.overall },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(CircleShape)
+            )
+        }
+    }
+
+    // =========================
+    // MONITOR
+    // =========================
+    if (showMonitor) {
+        MonitorPanel(ui)
+    }
+
+    // =========================
+    // TOMBOL
+    // =========================
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = 12.dp,
+                vertical = 4.dp
+            ),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        TextButton(
+            onClick = {
+                showMonitor = !showMonitor
+            }
+        ) {
+            Text(
+                text = if (showMonitor) {
+                    "Sembunyikan monitor"
+                } else {
+                    "Tampilkan monitor"
+                },
+                color = Color.White
+            )
+        }
+
+        if (manualAllowed && showManual) {
+            TextButton(
+                onClick = onManual
+            ) {
+                Text(
+                    text = "Foto manual",
                     color = Color.White
                 )
-            }
-
-            if (
-                manualAllowed &&
-                showManual
-            ) {
-
-                TextButton(
-                    onClick = onManual
-                ) {
-
-                    Text(
-                        text = "Foto manual",
-                        color = Color.White
-                    )
-                }
             }
         }
     }
