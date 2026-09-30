@@ -8,12 +8,22 @@ import java.util.Locale
 
 private val ID = Locale.forLanguageTag("id-ID")
 
-/** "06:50:00" -> "06:50"; null -> "--:--" */
-fun String?.toHhmm(): String = if (isNullOrBlank()) "--:--" else take(5)
+/** Server sering mengisi kolom kosong dengan "00:00:00"; itu dianggap belum ada. */
+fun String?.cleanTime(): String? =
+    this?.trim()?.takeIf { it.isNotEmpty() && !it.startsWith("00:00:00") }
+
+fun String?.cleanDate(): String? =
+    this?.trim()?.takeIf { it.isNotEmpty() && !it.startsWith("0000") }
+
+fun String?.toLocalTimeOrNull(): LocalTime? =
+    cleanTime()?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
+
+/** "06:50:00" -> "06:50"; kosong -> "--:--" */
+fun String?.toHhmm(): String = cleanTime()?.take(5) ?: "--:--"
 
 fun lateMinutes(actual: String?, schedule: String?): Long {
-    val a = runCatching { LocalTime.parse(actual) }.getOrNull() ?: return 0
-    val s = runCatching { LocalTime.parse(schedule) }.getOrNull() ?: return 0
+    val a = actual.toLocalTimeOrNull() ?: return 0
+    val s = schedule.toLocalTimeOrNull() ?: return 0
     return Duration.between(s, a).toMinutes().coerceAtLeast(0)
 }
 
