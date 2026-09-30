@@ -71,6 +71,8 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.play.services.location)
     implementation(libs.mlkit.face.detection)
+
+    implementation(libs.androidx.core.splashscreen)
 }
 
 kotlin {
