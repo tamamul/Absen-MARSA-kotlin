@@ -66,6 +66,8 @@ import com.marsa.absen.domain.model.AbsenRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.marsa.absen.ui.screen.absen.face.FaceCamera
 
 private fun Context.findActivity(): Activity? {
     var c: Context = this
@@ -85,6 +87,7 @@ fun AbsenScreen(
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
     val state = vm.state
+    var manual by rememberSaveable { mutableStateOf(false) }
 
     fun hasPermissions(): Boolean =
         ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
@@ -167,6 +170,7 @@ fun AbsenScreen(
                     AbsenStep.LOCATING -> CenterLoading("Mencari lokasi…")
 
                     AbsenStep.SUBMITTING -> CenterLoading("Mengirim absen…")
+                    AbsenStep.CHECKING -> CenterLoading("Memeriksa kualitas foto…")
 
                     AbsenStep.LOCATION_ERROR -> LocationErrorContent(
                         state = state,
@@ -174,7 +178,7 @@ fun AbsenScreen(
                         onRetry = vm::locate
                     )
 
-                    AbsenStep.CAMERA -> Column(
+                                        AbsenStep.CAMERA -> Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -187,13 +191,24 @@ fun AbsenScreen(
                                 .fillMaxWidth(),
                             contentAlignment = Alignment.Center
                         ) {
-                            CameraCapture(
-                                onPhoto = vm::onPhotoCaptured,
-                                onFailure = vm::onCameraError,
-                                modifier = Modifier
-                                    .aspectRatio(3f / 4f)
-                                    .clip(MaterialTheme.shapes.extraLarge)
-                            )
+                            val cameraModifier = Modifier
+                                .aspectRatio(3f / 4f)
+                                .clip(MaterialTheme.shapes.extraLarge)
+                            if (manual) {
+                                CameraCapture(
+                                    onPhoto = vm::onPhotoCaptured,
+                                    onFailure = vm::onCameraError,
+                                    modifier = cameraModifier
+                                )
+                            } else {
+                                FaceCamera(
+                                    manualAllowed = request.profil.faceRequired != "1",
+                                    onPhoto = vm::onPhotoCaptured,
+                                    onFailure = vm::onCameraError,
+                                    onManual = { manual = true },
+                                    modifier = cameraModifier
+                                )
+                            }
                         }
                         if (state.message != null) {
                             Text(
@@ -203,7 +218,6 @@ fun AbsenScreen(
                             )
                         }
                     }
-
                     AbsenStep.REVIEW -> ReviewContent(
                         state = state,
                         onRetake = vm::retake,
