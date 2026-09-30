@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
@@ -195,21 +196,26 @@ fun FaceCamera(
         showManual = true
     }
 
+    Column(
+    modifier = modifier
+) {
+
+    // =========================
+    // AREA KAMERA
+    // =========================
     Box(
-        modifier = modifier
+        modifier = Modifier
+            .fillMaxWidth()
+            .weight(1f)
     ) {
 
         AndroidView(
             factory = { ctx ->
                 PreviewView(ctx).apply {
-
                     controller = cam
-
-                    scaleType =
-                        PreviewView.ScaleType.FILL_CENTER
+                    scaleType = PreviewView.ScaleType.FILL_CENTER
                 }
             },
-
             modifier = Modifier.fillMaxSize()
         )
 
@@ -222,90 +228,59 @@ fun FaceCamera(
             modifier = Modifier.fillMaxSize()
         )
 
-        /*
-         * =========================
-         * ATAS: INSTRUKSI + TAHAP
-         * =========================
-         */
+        // =========================
+        // ATAS: INSTRUKSI + TAHAP
+        // =========================
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .padding(12.dp),
-
-            horizontalAlignment =
-                Alignment.CenterHorizontally,
-
-            verticalArrangement =
-                Arrangement.spacedBy(8.dp)
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
-            /*
-             * Emoji challenge dihapus.
-             */
-            val headline =
-                when (ui.phase) {
+            val headline = when (ui.phase) {
 
-                    Phase.CHALLENGE ->
-                        ui.hint +
-                            (
-                                ui.secondsLeft
-                                    ?.let { "  (${it}d)" }
-                                    ?: ""
-                            )
+                Phase.CHALLENGE ->
+                    ui.hint +
+                        (
+                            ui.secondsLeft
+                                ?.let { "  (${it}d)" }
+                                ?: ""
+                        )
 
-                    else ->
-                        ui.hint
-                }
+                else -> ui.hint
+            }
 
             Surface(
-                shape =
-                    RoundedCornerShape(20.dp),
-
-                color =
-                    Color.Black.copy(alpha = 0.55f)
+                shape = RoundedCornerShape(20.dp),
+                color = Color.Black.copy(alpha = 0.55f)
             ) {
-
                 Text(
                     text = headline,
-
                     color = Color.White,
-
-                    style =
-                        MaterialTheme.typography.titleMedium,
-
-                    textAlign =
-                        TextAlign.Center,
-
-                    modifier =
-                        Modifier.padding(
-                            horizontal = 16.dp,
-                            vertical = 8.dp
-                        )
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(
+                        horizontal = 16.dp,
+                        vertical = 8.dp
+                    )
                 )
             }
 
             Surface(
-                shape =
-                    RoundedCornerShape(12.dp),
-
-                color =
-                    Color.Black.copy(alpha = 0.45f)
+                shape = RoundedCornerShape(12.dp),
+                color = Color.Black.copy(alpha = 0.45f)
             ) {
-
                 Text(
                     text = stageLabel(ui),
-
                     color = Color.White,
-
-                    style =
-                        MaterialTheme.typography.labelLarge,
-
-                    modifier =
-                        Modifier.padding(
-                            horizontal = 12.dp,
-                            vertical = 4.dp
-                        )
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(
+                        horizontal = 12.dp,
+                        vertical = 4.dp
+                    )
                 )
             }
 
@@ -313,71 +288,57 @@ fun FaceCamera(
                 progress = {
                     ui.overall
                 },
-
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(CircleShape)
             )
         }
+    }
 
-        /*
-         * =========================
-         * BAWAH: TOMBOL + MONITOR
-         * =========================
-         */
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(12.dp),
+    // =========================
+    // AREA MONITOR
+    // =========================
+    if (showMonitor) {
+        MonitorPanel(ui)
+    }
 
-            verticalArrangement =
-                Arrangement.spacedBy(6.dp)
-        ) {
+    // =========================
+    // TOMBOL
+    // =========================
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = 12.dp,
+                vertical = 4.dp
+            ),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
 
-            Row(
-                horizontalArrangement =
-                    Arrangement.spacedBy(8.dp)
-            ) {
-
-                TextButton(
-                    onClick = {
-                        showMonitor =
-                            !showMonitor
-                    }
-                ) {
-
-                    Text(
-                        text =
-                            if (showMonitor) {
-                                "Sembunyikan monitor"
-                            } else {
-                                "Tampilkan monitor"
-                            },
-
-                        color = Color.White
-                    )
-                }
-
-                if (
-                    manualAllowed &&
-                    showManual
-                ) {
-
-                    TextButton(
-                        onClick = onManual
-                    ) {
-
-                        Text(
-                            text = "Foto manual",
-                            color = Color.White
-                        )
-                    }
-                }
+        TextButton(
+            onClick = {
+                showMonitor = !showMonitor
             }
+        ) {
+            Text(
+                text = if (showMonitor) {
+                    "Sembunyikan monitor"
+                } else {
+                    "Tampilkan monitor"
+                },
+                color = Color.White
+            )
+        }
 
-            if (showMonitor) {
-                MonitorPanel(ui)
+        if (manualAllowed && showManual) {
+            TextButton(
+                onClick = onManual
+            ) {
+                Text(
+                    text = "Foto manual",
+                    color = Color.White
+                )
             }
         }
     }
@@ -529,31 +490,22 @@ private fun MonitorPanel(
         }
     }
 
-    val lines =
-        listOf(
+    val lines = listOf(
+    "Wajah ${m.faceCount}" +
+        "${m.trackingId?.let { " (ID $it)" } ?: ""}" +
+        " • ${ui.fps} fps • " +
+        "Ukuran ${((m.box?.height ?: 0f) * 100).roundToInt()}% ${c.size.mark()} • " +
+        "Tengah ${c.centered.mark()} • " +
+        "Lurus ${c.frontal.mark()}",
 
-            "Wajah ${m.faceCount}" +
-                "${m.trackingId?.let {
-                    " (ID $it)"
-                } ?: ""}" +
-                " • ${ui.fps} fps",
-
-            "Ukuran " +
-                "${((m.box?.height ?: 0f) * 100).roundToInt()}%" +
-                " ${c.size.mark()}  " +
-                "Tengah ${c.centered.mark()}  " +
-                "Lurus ${c.frontal.mark()}",
-
-            "Mata ${c.eyesOpen.mark()}  " +
-                "Stabil ${c.stable.mark()}",
-
-            "Yaw ${m.yaw.roundToInt()}°  " +
-                "Pitch ${m.pitch.roundToInt()}°  " +
-                "Roll ${m.roll.roundToInt()}°",
-
-            "Mata kiri ${pct(m.leftEye)}  " +
-                "kanan ${pct(m.rightEye)}"
-        )
+    "Mata ${c.eyesOpen.mark()} • " +
+        "Stabil ${c.stable.mark()} • " +
+        "Yaw ${m.yaw.roundToInt()}° • " +
+        "Pitch ${m.pitch.roundToInt()}° • " +
+        "Roll ${m.roll.roundToInt()}° • " +
+        "Mata L ${pct(m.leftEye)} • " +
+        "R ${pct(m.rightEye)}"
+)
 
     Surface(
         shape =
