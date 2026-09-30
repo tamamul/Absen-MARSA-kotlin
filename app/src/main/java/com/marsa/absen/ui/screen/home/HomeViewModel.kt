@@ -16,6 +16,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.marsa.absen.data.local.TokenStore
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 enum class AbsenStatus { BELUM_MASUK, SUDAH_MASUK, SELESAI }
 
@@ -42,13 +44,18 @@ data class HomeUiState(
 class HomeViewModel @Inject constructor(
     private val repo: HomeRepository,
     private val auth: AuthRepository
+    private val tokenStore: TokenStore
 ) : ViewModel() {
 
     var state by mutableStateOf(HomeUiState())
         private set
 
     init {
-        load()
+        viewModelScope.launch {
+            tokenStore.token.distinctUntilChanged().collect { token ->
+                if (token.isNullOrBlank()) state = HomeUiState() else load()
+            }
+        }
     }
 
     fun refresh() = load()
