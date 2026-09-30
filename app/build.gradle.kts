@@ -73,6 +73,7 @@ dependencies {
     implementation(libs.mlkit.face.detection)
 
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.coil.compose)
 }
 
 kotlin {
