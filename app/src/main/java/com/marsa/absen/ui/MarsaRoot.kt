@@ -10,7 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.marsa.absen.ui.screen.home.HomePlaceholderScreen
+import com.marsa.absen.ui.screen.home.HomeScreen
 import com.marsa.absen.ui.screen.login.LoginScreen
 
 @Composable
@@ -21,7 +21,7 @@ fun MarsaRoot(session: SessionViewModel = hiltViewModel()) {
         when (s) {
             SessionState.Loading -> SplashScreen()
             SessionState.LoggedOut -> LoginScreen()
-            SessionState.LoggedIn -> HomePlaceholderScreen(onLogout = session::logout)
+            SessionState.LoggedIn -> HomeScreen(onLogout = session::logout) 
         }
     }
 }
