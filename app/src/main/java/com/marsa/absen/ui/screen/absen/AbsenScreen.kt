@@ -387,6 +387,17 @@ private fun ReviewContent(
                 CircularProgressIndicator()
             }
         }
+
+        state.quality?.let {
+            Text(
+                text = "Foto lolos pemeriksaan • ketajaman ${it.sharpness.roundToInt()} • cahaya ${it.brightness.roundToInt()}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(
                 onClick = onRetake,
