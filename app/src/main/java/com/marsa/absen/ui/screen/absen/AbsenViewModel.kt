@@ -117,24 +117,43 @@ class AbsenViewModel @Inject constructor(
         }
     }
 
-        fun onPhotoCaptured(file: File) {
-        viewModelScope.launch {
-            state = state.copy(step = AbsenStep.CHECKING, message = null)
-            val processed = preparePortraitPhoto(file)
-            val report = assessPhoto(processed)
-            state = if (report.ok) {
-                state.copy(step = AbsenStep.REVIEW, photo = processed, quality = report, message = null)
-            } else {
-                processed.delete()
-                state.copy(
-                    step = AbsenStep.CAMERA,
-                    photo = null,
-                    quality = null,
-                    message = "Foto ditolak: " + report.problems.joinToString("; ") + ". Coba lagi."
-                )
-            }
+    fun onPhotoCaptured(file: File) {
+    viewModelScope.launch {
+        state = state.copy(
+            step = AbsenStep.CHECKING,
+            message = null
+        )
+
+        val processed = preparePortraitPhoto(file)
+        val report = assessPhoto(processed)
+
+        if (report.ok) {
+            // Foto lolos pemeriksaan → tampilkan preview lalu otomatis kirim
+            state = state.copy(
+                step = AbsenStep.REVIEW,
+                photo = processed,
+                quality = report,
+                message = "Foto siap. Mengirim ke server..."
+            )
+
+            // Beri waktu sangat singkat agar preview sempat tampil
+            kotlinx.coroutines.delay(300)
+
+            submit()
+        } else {
+            processed.delete()
+
+            state = state.copy(
+                step = AbsenStep.CAMERA,
+                photo = null,
+                quality = null,
+                message = "Foto ditolak: " +
+                    report.problems.joinToString("; ") +
+                    ". Coba lagi."
+            )
         }
     }
+}
 
     fun onCameraError(message: String) {
     state = state.copy(
