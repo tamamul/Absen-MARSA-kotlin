@@ -55,8 +55,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
 
 /**
- * Kamera depan dengan deteksi wajah + tantangan liveness acak + auto capture.
- * Foto disimpan ke file cache lalu diserahkan lewat [onPhoto].
+ * Kamera depan dengan deteksi wajah + liveness + auto capture.
+ * Foto disimpan ke file cache lalu diserahkan lewat onPhoto.
  */
 @Composable
 fun FaceCamera(
@@ -70,31 +70,49 @@ fun FaceCamera(
     val lifecycleOwner = LocalLifecycleOwner.current
 
     val engine = remember { LivenessEngine() }
-    var ui by remember { mutableStateOf(LivenessUi()) }
-    val captureGuard = remember { AtomicBoolean(false) }
 
-    var showMonitor by rememberSaveable { mutableStateOf(true) }
-    var showManual by remember { mutableStateOf(false) }
+    var ui by remember {
+        mutableStateOf(LivenessUi())
+    }
+
+    val captureGuard = remember {
+        AtomicBoolean(false)
+    }
+
+    var showMonitor by rememberSaveable {
+        mutableStateOf(true)
+    }
+
+    var showManual by remember {
+        mutableStateOf(false)
+    }
 
     val currentOnPhoto by rememberUpdatedState(onPhoto)
     val currentOnFailure by rememberUpdatedState(onFailure)
 
     val cam = remember {
         LifecycleCameraController(context).apply {
-            cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+
+            cameraSelector =
+                CameraSelector.DEFAULT_FRONT_CAMERA
+
             setEnabledUseCases(
                 CameraController.IMAGE_CAPTURE or
                     CameraController.IMAGE_ANALYSIS
             )
+
             imageAnalysisBackpressureStrategy =
                 ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
         }
     }
 
     DisposableEffect(lifecycleOwner) {
-        val executor = Executors.newSingleThreadExecutor()
+
+        val executor =
+            Executors.newSingleThreadExecutor()
 
         val analyzer = FaceAnalyzer { metrics ->
+
             val next = engine.onFrame(
                 metrics,
                 SystemClock.elapsedRealtime()
@@ -106,6 +124,7 @@ fun FaceCamera(
                 next.readyToCapture &&
                 captureGuard.compareAndSet(false, true)
             ) {
+
                 val file = File.createTempFile(
                     "absen_",
                     ".jpg",
@@ -113,8 +132,12 @@ fun FaceCamera(
                 )
 
                 cam.takePicture(
-                    ImageCapture.OutputFileOptions.Builder(file).build(),
+                    ImageCapture.OutputFileOptions.Builder(
+                        file
+                    ).build(),
+
                     ContextCompat.getMainExecutor(context),
+
                     object : ImageCapture.OnImageSavedCallback {
 
                         override fun onImageSaved(
@@ -126,8 +149,11 @@ fun FaceCamera(
                         override fun onError(
                             exception: ImageCaptureException
                         ) {
+
                             file.delete()
+
                             captureGuard.set(false)
+
                             engine.reset()
 
                             currentOnFailure(
@@ -139,134 +165,209 @@ fun FaceCamera(
             }
         }
 
-        cam.setImageAnalysisAnalyzer(executor, analyzer)
-        cam.bindToLifecycle(lifecycleOwner)
+        cam.setImageAnalysisAnalyzer(
+            executor,
+            analyzer
+        )
+
+        cam.bindToLifecycle(
+            lifecycleOwner
+        )
 
         onDispose {
+
             cam.clearImageAnalysisAnalyzer()
+
             cam.unbind()
+
             analyzer.close()
+
             executor.shutdown()
         }
     }
 
-    // Tombol foto manual baru muncul setelah 25 detik
-    // jika server mengizinkan.
+    /*
+     * Tombol foto manual baru muncul setelah 25 detik
+     * jika server mengizinkan.
+     */
     LaunchedEffect(Unit) {
         delay(25_000)
         showManual = true
     }
 
-    Box(modifier) {
+    Box(
+        modifier = modifier
+    ) {
 
         AndroidView(
             factory = { ctx ->
                 PreviewView(ctx).apply {
+
                     controller = cam
-                    scaleType = PreviewView.ScaleType.FILL_CENTER
+
+                    scaleType =
+                        PreviewView.ScaleType.FILL_CENTER
                 }
             },
+
             modifier = Modifier.fillMaxSize()
         )
 
-        // Kotak tracking wajah saja.
-        // Oval panduan sudah dihapus.
+        /*
+         * Kotak tracking wajah.
+         * Oval panduan dihapus.
+         */
         FaceOverlay(
             ui = ui,
             modifier = Modifier.fillMaxSize()
         )
 
-        // =========================
-        // ATAS: INSTRUKSI + TAHAP
-        // =========================
+        /*
+         * =========================
+         * ATAS: INSTRUKSI + TAHAP
+         * =========================
+         */
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+
+            horizontalAlignment =
+                Alignment.CenterHorizontally,
+
+            verticalArrangement =
+                Arrangement.spacedBy(8.dp)
         ) {
 
-            val headline = when (ui.phase) {
-                Phase.CHALLENGE ->
-                    "${ui.challenge?.emoji.orEmpty()} ${ui.hint}" +
-                        (ui.secondsLeft?.let { "  (${it}d)" } ?: "")
+            /*
+             * Emoji challenge dihapus.
+             */
+            val headline =
+                when (ui.phase) {
 
-                else -> ui.hint
-            }
+                    Phase.CHALLENGE ->
+                        ui.hint +
+                            (
+                                ui.secondsLeft
+                                    ?.let { "  (${it}d)" }
+                                    ?: ""
+                            )
+
+                    else ->
+                        ui.hint
+                }
 
             Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = Color.Black.copy(alpha = 0.55f)
+                shape =
+                    RoundedCornerShape(20.dp),
+
+                color =
+                    Color.Black.copy(alpha = 0.55f)
             ) {
+
                 Text(
                     text = headline,
+
                     color = Color.White,
-                    style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(
-                        horizontal = 16.dp,
-                        vertical = 8.dp
-                    )
+
+                    style =
+                        MaterialTheme.typography.titleMedium,
+
+                    textAlign =
+                        TextAlign.Center,
+
+                    modifier =
+                        Modifier.padding(
+                            horizontal = 16.dp,
+                            vertical = 8.dp
+                        )
                 )
             }
 
             Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = Color.Black.copy(alpha = 0.45f)
+                shape =
+                    RoundedCornerShape(12.dp),
+
+                color =
+                    Color.Black.copy(alpha = 0.45f)
             ) {
+
                 Text(
                     text = stageLabel(ui),
+
                     color = Color.White,
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(
-                        horizontal = 12.dp,
-                        vertical = 4.dp
-                    )
+
+                    style =
+                        MaterialTheme.typography.labelLarge,
+
+                    modifier =
+                        Modifier.padding(
+                            horizontal = 12.dp,
+                            vertical = 4.dp
+                        )
                 )
             }
 
             LinearProgressIndicator(
-                progress = { ui.overall },
+                progress = {
+                    ui.overall
+                },
+
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(CircleShape)
             )
         }
 
-        // =========================
-        // BAWAH: TOMBOL + MONITOR
-        // =========================
+        /*
+         * =========================
+         * BAWAH: TOMBOL + MONITOR
+         * =========================
+         */
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+
+            verticalArrangement =
+                Arrangement.spacedBy(6.dp)
         ) {
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement =
+                    Arrangement.spacedBy(8.dp)
             ) {
 
                 TextButton(
                     onClick = {
-                        showMonitor = !showMonitor
+                        showMonitor =
+                            !showMonitor
                     }
                 ) {
+
                     Text(
-                        text = if (showMonitor) {
-                            "Sembunyikan monitor"
-                        } else {
-                            "Tampilkan monitor"
-                        },
+                        text =
+                            if (showMonitor) {
+                                "Sembunyikan monitor"
+                            } else {
+                                "Tampilkan monitor"
+                            },
+
                         color = Color.White
                     )
                 }
 
-                if (manualAllowed && showManual) {
-                    TextButton(onClick = onManual) {
+                if (
+                    manualAllowed &&
+                    showManual
+                ) {
+
+                    TextButton(
+                        onClick = onManual
+                    ) {
+
                         Text(
                             text = "Foto manual",
                             color = Color.White
@@ -282,8 +383,17 @@ fun FaceCamera(
     }
 }
 
-private fun stageLabel(ui: LivenessUi): String =
-    when (ui.phase) {
+/*
+ * =========================
+ * STAGE LABEL
+ * =========================
+ */
+private fun stageLabel(
+    ui: LivenessUi
+): String {
+
+    return when (ui.phase) {
+
         Phase.ALIGN ->
             "Tahap 1/3 • Posisi wajah"
 
@@ -296,103 +406,182 @@ private fun stageLabel(ui: LivenessUi): String =
         Phase.CAPTURING ->
             "Mengambil foto…"
     }
+}
 
+/*
+ * =========================
+ * FACE OVERLAY
+ * =========================
+ */
 @Composable
 private fun FaceOverlay(
     ui: LivenessUi,
     modifier: Modifier = Modifier
 ) {
-    val good = Color(0xFF4CAF50)
-    val warn = Color(0xFFFFC107)
 
-    val color = when {
-        ui.checks.allOk -> good
-        ui.metrics.faceCount > 0 -> warn
-        else -> Color.White
-    }
+    val good =
+        Color(0xFF4CAF50)
 
-    Canvas(modifier = modifier) {
+    val warn =
+        Color(0xFFFFC107)
 
-        // Hanya kotak pelacak wajah.
-        // Oval panduan DIHAPUS.
+    val color =
+        when {
+
+            ui.checks.allOk ->
+                good
+
+            ui.metrics.faceCount > 0 ->
+                warn
+
+            else ->
+                Color.White
+        }
+
+    Canvas(
+        modifier = modifier
+    ) {
+
+        /*
+         * Hanya kotak pelacak wajah.
+         * Oval panduan dihapus.
+         */
         ui.metrics.box?.let { b ->
 
-            val left = (1f - b.right) * size.width
-            val right = (1f - b.left) * size.width
+            val left =
+                (1f - b.right) *
+                    size.width
+
+            val right =
+                (1f - b.left) *
+                    size.width
 
             drawRoundRect(
-                color = color.copy(alpha = 0.9f),
-                topLeft = Offset(
-                    left,
-                    b.top * size.height
-                ),
-                size = Size(
-                    right - left,
-                    (b.bottom - b.top) * size.height
-                ),
-                cornerRadius = CornerRadius(
-                    16.dp.toPx()
-                ),
-                style = Stroke(
-                    width = 2.dp.toPx()
-                )
+
+                color =
+                    color.copy(alpha = 0.9f),
+
+                topLeft =
+                    Offset(
+                        left,
+                        b.top * size.height
+                    ),
+
+                size =
+                    Size(
+                        right - left,
+                        (b.bottom - b.top) *
+                            size.height
+                    ),
+
+                cornerRadius =
+                    CornerRadius(
+                        16.dp.toPx()
+                    ),
+
+                style =
+                    Stroke(
+                        width =
+                            2.dp.toPx()
+                    )
             )
         }
     }
 }
 
-private fun pct(v: Float?): String =
-    v?.let {
+/*
+ * =========================
+ * PERCENTAGE
+ * =========================
+ */
+private fun pct(
+    v: Float?
+): String {
+
+    return v?.let {
+
         "${(it * 100).roundToInt()}%"
+
     } ?: "--"
+}
 
+/*
+ * =========================
+ * MONITOR PANEL
+ * =========================
+ */
 @Composable
-private fun MonitorPanel(ui: LivenessUi) {
+private fun MonitorPanel(
+    ui: LivenessUi
+) {
 
-    val m = ui.metrics
-    val c = ui.checks
+    val m =
+        ui.metrics
 
-    fun Boolean.mark() =
-        if (this) "✓" else "✗"
+    val c =
+        ui.checks
 
-    val lines = listOf(
-        "Wajah ${m.faceCount}" +
-            "${m.trackingId?.let { " (ID $it)" } ?: ""}" +
-            " • ${ui.fps} fps",
+    fun Boolean.mark(): String {
+        return if (this) {
+            "✓"
+        } else {
+            "✗"
+        }
+    }
 
-        "Ukuran ${((m.box?.height ?: 0f) * 100).roundToInt()}%" +
-            " ${c.size.mark()}  " +
-            "Tengah ${c.centered.mark()}  " +
-            "Lurus ${c.frontal.mark()}",
+    val lines =
+        listOf(
 
-        "Mata ${c.eyesOpen.mark()}  " +
-            "Stabil ${c.stable.mark()}",
+            "Wajah ${m.faceCount}" +
+                "${m.trackingId?.let {
+                    " (ID $it)"
+                } ?: ""}" +
+                " • ${ui.fps} fps",
 
-        "Yaw ${m.yaw.roundToInt()}°  " +
-            "Pitch ${m.pitch.roundToInt()}°  " +
-            "Roll ${m.roll.roundToInt()}°",
+            "Ukuran " +
+                "${((m.box?.height ?: 0f) * 100).roundToInt()}%" +
+                " ${c.size.mark()}  " +
+                "Tengah ${c.centered.mark()}  " +
+                "Lurus ${c.frontal.mark()}",
 
-        "Mata kiri ${pct(m.leftEye)}  " +
-            "kanan ${pct(m.rightEye)}"
-    )
+            "Mata ${c.eyesOpen.mark()}  " +
+                "Stabil ${c.stable.mark()}",
+
+            "Yaw ${m.yaw.roundToInt()}°  " +
+                "Pitch ${m.pitch.roundToInt()}°  " +
+                "Roll ${m.roll.roundToInt()}°",
+
+            "Mata kiri ${pct(m.leftEye)}  " +
+                "kanan ${pct(m.rightEye)}"
+        )
 
     Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = Color.Black.copy(alpha = 0.6f)
+        shape =
+            RoundedCornerShape(16.dp),
+
+        color =
+            Color.Black.copy(alpha = 0.6f)
     ) {
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+
+            verticalArrangement =
+                Arrangement.spacedBy(2.dp)
         ) {
 
-            lines.forEach {
+            lines.forEach { line ->
+
                 Text(
-                    text = it,
+                    text = line,
+
                     color = Color.White,
-                    fontFamily = FontFamily.Monospace,
+
+                    fontFamily =
+                        FontFamily.Monospace,
+
                     fontSize = 8.sp
                 )
             }
