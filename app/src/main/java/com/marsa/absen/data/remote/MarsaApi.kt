@@ -9,6 +9,10 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import retrofit2.http.Multipart
+import retrofit2.http.Part
 
 interface MarsaApi {
 
@@ -54,4 +58,20 @@ interface MarsaApi {
 
     @POST("api/pengumuman/{id}/komentar")
     suspend fun kirimKomentar(@Path("id") id: Int, @Body body: JsonObject): Response<JsonElement>
+
+    @Multipart
+    @POST("api/absen/masuk")
+    suspend fun absenMasuk(
+        @Part("latitude") latitude: RequestBody,
+        @Part("longitude") longitude: RequestBody,
+        @Part foto: MultipartBody.Part
+    ): Response<JsonElement>
+
+    @Multipart
+    @POST("api/absen/keluar")
+    suspend fun absenKeluar(
+        @Part("latitude") latitude: RequestBody,
+        @Part("longitude") longitude: RequestBody,
+        @Part foto: MultipartBody.Part
+    ): Response<JsonElement>    
 }
