@@ -1,5 +1,11 @@
 package com.marsa.absen.ui.screen.home
 
+import android.Manifest
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +20,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.LocationOff
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -24,58 +33,85 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.marsa.absen.domain.model.AbsenMode
+import com.marsa.absen.domain.model.LocationCheck
 import com.marsa.absen.domain.model.PegawaiProfil
 import com.marsa.absen.util.greeting
 import com.marsa.absen.util.initials
 import com.marsa.absen.util.lateMinutes
 import com.marsa.absen.util.toHhmm
 import com.marsa.absen.util.todayLabel
-import kotlinx.coroutines.launch
-import androidx.compose.runtime.LaunchedEffect
-import com.marsa.absen.domain.model.AbsenMode
+import kotlinx.coroutines.delay
+import java.time.LocalTime
+
+private val PERMISSIONS = arrayOf(
+    Manifest.permission.ACCESS_FINE_LOCATION,
+    Manifest.permission.ACCESS_COARSE_LOCATION,
+    Manifest.permission.CAMERA
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onLogout: () -> Unit,
-    onAbsen: (AbsenMode, PegawaiProfil) -> Unit,
+    onAbsen: (AbsenMode, PegawaiProfil, LocationCheck.Inside?) -> Unit,
     refreshKey: Int = 0,
     vm: HomeViewModel = hiltViewModel()
 ) {
     val state = vm.state
-    val snackbar = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    val location = vm.location
+    val context = LocalContext.current
     var confirmLogout by rememberSaveable { mutableStateOf(false) }
-        LaunchedEffect(refreshKey) {
-        if (refreshKey > 0) vm.refresh()
+
+    // Jam berjalan agar tombol pulang aktif otomatis saat waktunya tiba
+    val now by produceState(LocalTime.now()) {
+        while (true) {
+            delay(30_000)
+            value = LocalTime.now()
+        }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { vm.checkLocation() }
+
+    LaunchedEffect(Unit) {
+        if (!vm.hasLocationPermission()) permissionLauncher.launch(PERMISSIONS)
+    }
+    LaunchedEffect(refreshKey) {
+        if (refreshKey > 0) vm.refresh()
+    }
+    LifecycleResumeEffect(Unit) {
+        vm.checkLocationIfStale()
+        onPauseOrDispose { }
+    }
+
+    Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
         PullToRefreshBox(
             isRefreshing = state.refreshing,
-            onRefresh = vm::refresh,
+            onRefresh = {
+                vm.refresh()
+                vm.checkLocation()
+            },
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
@@ -95,14 +131,26 @@ fun HomeScreen(
                 else -> HomeContent(
                     state = state,
                     profil = profil,
+                    location = location,
+                    now = now,
                     onLogoutClick = { confirmLogout = true },
-                        onAbsenClick = {
+                    onAbsenClick = {
                         val mode = if (state.status == AbsenStatus.BELUM_MASUK) {
                             AbsenMode.MASUK
                         } else {
                             AbsenMode.KELUAR
                         }
-                        onAbsen(mode, profil)
+                        onAbsen(mode, profil, location as? LocationCheck.Inside)
+                    },
+                    onLocationRefresh = vm::checkLocation,
+                    onGrant = { permissionLauncher.launch(PERMISSIONS) },
+                    onOpenSettings = {
+                        context.startActivity(
+                            Intent(
+                                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                Uri.fromParts("package", context.packageName, null)
+                            )
+                        )
                     }
                 )
             }
@@ -131,8 +179,13 @@ fun HomeScreen(
 private fun HomeContent(
     state: HomeUiState,
     profil: PegawaiProfil,
+    location: LocationCheck,
+    now: LocalTime,
     onLogoutClick: () -> Unit,
-    onAbsenClick: () -> Unit
+    onAbsenClick: () -> Unit,
+    onLocationRefresh: () -> Unit,
+    onGrant: () -> Unit,
+    onOpenSettings: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -153,10 +206,16 @@ private fun HomeContent(
 
         ProfileCard(profil)
         StatusCard(state, profil)
+        LocationCard(location, onLocationRefresh, onGrant, onOpenSettings)
 
         val (label, enabled) = when (state.status) {
             AbsenStatus.BELUM_MASUK -> "Absen Masuk" to true
-            AbsenStatus.SUDAH_MASUK -> "Absen Pulang" to true
+            AbsenStatus.SUDAH_MASUK ->
+                if (state.pulangDibuka(now)) {
+                    "Absen Pulang" to true
+                } else {
+                    "Absen pulang mulai ${profil.jamPulang.toHhmm()}" to false
+                }
             AbsenStatus.SELESAI -> "Absensi hari ini selesai" to false
         }
         Button(
@@ -266,7 +325,7 @@ private fun StatusCard(state: HomeUiState, profil: PegawaiProfil) {
         AbsenStatus.SUDAH_MASUK -> "Sudah absen masuk"
         AbsenStatus.SELESAI -> "Absensi hari ini selesai"
     }
-    val late = if (abs?.jamMasuk != null) lateMinutes(abs.jamMasuk, profil.jamMasuk) else 0L
+    val late = lateMinutes(abs?.jamMasuk, profil.jamMasuk)
 
     Card(
         shape = MaterialTheme.shapes.extraLarge,
@@ -312,6 +371,74 @@ private fun TimeTile(label: String, value: String) {
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.SemiBold
         )
+    }
+}
+
+@Composable
+private fun LocationCard(
+    location: LocationCheck,
+    onRefresh: () -> Unit,
+    onGrant: () -> Unit,
+    onOpenSettings: () -> Unit
+) {
+    val info: Pair<String, String?> = when (location) {
+        LocationCheck.Idle -> "Lokasi" to "Belum diperiksa"
+        LocationCheck.Checking -> "Memeriksa lokasi…" to null
+        LocationCheck.NoPermission -> "Izin lokasi belum diberikan" to "Diperlukan agar bisa absen"
+        LocationCheck.Unauthorized -> "Sesi berakhir" to null
+        is LocationCheck.Inside -> "Di dalam area absen" to listOfNotNull(
+            location.lokasi,
+            location.jarak?.let { "±$it m" },
+            location.radius?.let { "radius $it m" }
+        ).joinToString(" • ")
+        is LocationCheck.Problem ->
+            (if (location.outside) "Di luar area absen" else "Lokasi bermasalah") to location.message
+    }
+    val (title, detail) = info
+
+    val container = when (location) {
+        is LocationCheck.Inside -> MaterialTheme.colorScheme.secondaryContainer
+        is LocationCheck.Problem -> MaterialTheme.colorScheme.errorContainer
+        else -> MaterialTheme.colorScheme.surfaceContainer
+    }
+    val icon = if (location is LocationCheck.Inside) Icons.Filled.LocationOn
+    else Icons.Filled.LocationOff
+
+    Card(
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = container)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(icon, contentDescription = null)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                if (!detail.isNullOrBlank()) {
+                    Text(detail, style = MaterialTheme.typography.bodyMedium)
+                }
+                if (location is LocationCheck.NoPermission) {
+                    Row {
+                        TextButton(onClick = onGrant) { Text("Izinkan") }
+                        TextButton(onClick = onOpenSettings) { Text("Pengaturan") }
+                    }
+                }
+            }
+            when (location) {
+                LocationCheck.Checking ->
+                    CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.5.dp)
+
+                LocationCheck.NoPermission -> Unit
+
+                else -> IconButton(onClick = onRefresh) {
+                    Icon(Icons.Filled.Refresh, contentDescription = "Periksa ulang lokasi")
+                }
+            }
+        }
     }
 }
 
