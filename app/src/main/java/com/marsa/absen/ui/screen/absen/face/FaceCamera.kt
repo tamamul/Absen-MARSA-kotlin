@@ -195,18 +195,7 @@ fun FaceCamera(
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             if (ui.metrics.faceCount > 0) {
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = Color.Black.copy(alpha = 0.55f)
-                ) {
-                    Text(
-                        text = "Ekspresi (perkiraan): ${ui.metrics.expression}",
-                        color = Color.White,
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                    )
-                }
-            }
+            
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = { showMonitor = !showMonitor }) {
                     Text(if (showMonitor) "Sembunyikan monitor" else "Tampilkan monitor", color = Color.White)
@@ -239,15 +228,6 @@ private fun FaceOverlay(ui: LivenessUi, modifier: Modifier = Modifier) {
         else -> Color.White
     }
     Canvas(modifier = modifier) {
-        // Oval panduan (pusat vertikal ±0.48 tinggi layar)
-        val ow = size.width * 0.66f
-        val oh = size.height * 0.56f
-        drawOval(
-            color = color,
-            topLeft = Offset((size.width - ow) / 2f, size.height * 0.20f),
-            size = Size(ow, oh),
-            style = Stroke(width = 4.dp.toPx())
-        )
         // Kotak pelacak wajah; x dicerminkan karena pratinjau kamera depan berupa cermin
         ui.metrics.box?.let { b ->
             val left = (1f - b.right) * size.width
@@ -291,7 +271,7 @@ private fun MonitorPanel(ui: LivenessUi) {
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             lines.forEach {
-                Text(text = it, color = Color.White, fontFamily = FontFamily.Monospace, fontSize = 11.sp)
+                Text(text = it, color = Color.White, fontFamily = FontFamily.Monospace, fontSize = 8.sp)
             }
         }
     }
