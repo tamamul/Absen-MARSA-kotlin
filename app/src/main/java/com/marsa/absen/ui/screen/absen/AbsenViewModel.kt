@@ -136,6 +136,13 @@ class AbsenViewModel @Inject constructor(
         }
     }
 
+    fun onCameraError(message: String) {
+    state = state.copy(
+        step = AbsenStep.CAMERA,
+        message = message
+    )
+}
+
     fun retake() {
         state.photo?.delete()
         state = state.copy(step = AbsenStep.CAMERA, photo = null, quality = null, message = null)
