@@ -40,7 +40,7 @@ fun MarsaRoot(session: SessionViewModel = hiltViewModel()) {
                 if (req == null) {
                     HomeScreen(
                         onLogout = session::logout,
-                        onAbsen = { mode, profil -> absenRequest = AbsenRequest(mode, profil, pre) },
+                        onAbsen = { mode, profil, pre -> absenRequest = AbsenRequest(mode, profil, pre) },
                         refreshKey = refreshKey
                     )
                 } else {
