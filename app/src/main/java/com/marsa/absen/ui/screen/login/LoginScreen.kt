@@ -3,12 +3,14 @@ package com.marsa.absen.ui.screen.login
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -18,6 +20,7 @@ import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,9 +45,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Row
 
 @Composable
 fun LoginScreen(vm: LoginViewModel = hiltViewModel()) {
@@ -55,7 +55,11 @@ fun LoginScreen(vm: LoginViewModel = hiltViewModel()) {
 
     val state = vm.state
     val focus = LocalFocusManager.current
-    val canSubmit = login.isNotBlank() && password.isNotBlank() && !state.loading
+
+    val canSubmit =
+        login.isNotBlank() &&
+        password.isNotBlank() &&
+        !state.loading
 
     fun submit() {
         if (canSubmit) {
@@ -64,14 +68,13 @@ fun LoginScreen(vm: LoginViewModel = hiltViewModel()) {
         }
     }
 
-Box(
-    modifier = Modifier
-        .fillMaxSize()
-        .safeDrawingPadding()
-        .imePadding(),
-    contentAlignment = Alignment.Center
-)
-    {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .safeDrawingPadding()
+            .imePadding(),
+        contentAlignment = Alignment.Center
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -80,12 +83,16 @@ Box(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+
+            // Logo
             Surface(
                 shape = MaterialTheme.shapes.extraLarge,
                 color = MaterialTheme.colorScheme.primaryContainer,
                 modifier = Modifier.size(88.dp)
             ) {
-                Box(contentAlignment = Alignment.Center) {
+                Box(
+                    contentAlignment = Alignment.Center
+                ) {
                     Icon(
                         imageVector = Icons.Filled.Fingerprint,
                         contentDescription = null,
@@ -95,11 +102,13 @@ Box(
                 }
             }
 
+            // Judul
             Text(
                 text = "Absen Marsa",
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
+
             Text(
                 text = "Masuk untuk mulai mencatat kehadiran",
                 style = MaterialTheme.typography.bodyMedium,
@@ -108,13 +117,18 @@ Box(
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
+            // Username / Email
             OutlinedTextField(
                 value = login,
                 onValueChange = {
                     login = it
-                    if (state.error != null) vm.dismissError()
+                    if (state.error != null) {
+                        vm.dismissError()
+                    }
                 },
-                label = { Text("Username atau email") },
+                label = {
+                    Text("Username atau email")
+                },
                 singleLine = true,
                 enabled = !state.loading,
                 shape = MaterialTheme.shapes.medium,
@@ -124,41 +138,86 @@ Box(
                     imeAction = ImeAction.Next
                 ),
                 keyboardActions = KeyboardActions(
-                    onNext = { focus.moveFocus(FocusDirection.Down) }
+                    onNext = {
+                        focus.moveFocus(FocusDirection.Down)
+                    }
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // Password
             OutlinedTextField(
                 value = password,
                 onValueChange = {
                     password = it
-                    if (state.error != null) vm.dismissError()
+                    if (state.error != null) {
+                        vm.dismissError()
+                    }
                 },
-                label = { Text("Password") },
+                label = {
+                    Text("Password")
+                },
                 singleLine = true,
                 enabled = !state.loading,
                 shape = MaterialTheme.shapes.medium,
-                visualTransformation = if (showPassword) VisualTransformation.None
-                else PasswordVisualTransformation(),
+                visualTransformation = if (showPassword) {
+                    VisualTransformation.None
+                } else {
+                    PasswordVisualTransformation()
+                },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done
                 ),
-                keyboardActions = KeyboardActions(onDone = { submit() }),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        submit()
+                    }
+                ),
                 trailingIcon = {
-                    IconButton(onClick = { showPassword = !showPassword }) {
+                    IconButton(
+                        onClick = {
+                            showPassword = !showPassword
+                        }
+                    ) {
                         Icon(
-                            imageVector = if (showPassword) Icons.Filled.VisibilityOff
-                            else Icons.Filled.Visibility,
-                            contentDescription = if (showPassword) "Sembunyikan password"
-                            else "Tampilkan password"
+                            imageVector = if (showPassword) {
+                                Icons.Filled.VisibilityOff
+                            } else {
+                                Icons.Filled.Visibility
+                            },
+                            contentDescription = if (showPassword) {
+                                "Sembunyikan password"
+                            } else {
+                                "Tampilkan password"
+                            }
                         )
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // Ingat saya
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 2.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = rememberPassword,
+                    onCheckedChange = {
+                        rememberPassword = it
+                    }
+                )
+
+                Text(
+                    text = "Ingat saya",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            // Pesan error
             if (state.error != null) {
                 Text(
                     text = state.error,
@@ -169,31 +228,16 @@ Box(
                 )
             }
 
-            Row(
-    modifier = Modifier
-        .fillMaxWidth()
-        .padding(top = 2.dp),
-    verticalAlignment = Alignment.CenterVertically
-) {
-    Checkbox(
-        checked = rememberPassword,
-        onCheckedChange = { rememberPassword = it }
-    )
-
-    Text(
-        text = "Ingat saya",
-        style = MaterialTheme.typography.bodyMedium
-    )
-}
-
+            // Tombol masuk
             Button(
-                onClick = { submit() },
+                onClick = {
+                    submit()
+                },
                 enabled = canSubmit,
                 shape = MaterialTheme.shapes.large,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
-                    .padding(top = 0.dp)
             ) {
                 if (state.loading) {
                     CircularProgressIndicator(
@@ -202,7 +246,10 @@ Box(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text("Masuk", style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        text = "Masuk",
+                        style = MaterialTheme.typography.labelLarge
+                    )
                 }
             }
         }
