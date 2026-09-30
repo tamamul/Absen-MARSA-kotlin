@@ -38,6 +38,8 @@ import com.marsa.absen.ui.screen.login.LoginScreen
 import com.marsa.absen.ui.screen.riwayat.RiwayatScreen
 import androidx.compose.material.icons.filled.PhotoLibrary
 import com.marsa.absen.ui.screen.galeri.GaleriScreen
+import androidx.compose.material.icons.filled.Person
+import com.marsa.absen.ui.screen.profil.ProfilScreen
 
 @Composable
 fun MarsaRoot(session: SessionViewModel = hiltViewModel()) {
@@ -109,6 +111,12 @@ private fun MainScaffold(
                     icon = { Icon(Icons.Filled.PhotoLibrary, contentDescription = null) },
                     label = { Text("Galeri") }
                 )
+                    NavigationBarItem(
+                    selected = tab == 3,
+                    onClick = { tab = 3 },
+                    icon = { Icon(Icons.Filled.Person, contentDescription = null) },
+                    label = { Text("Profil") }
+                )
             }
         }
     ) { padding ->
@@ -120,7 +128,8 @@ private fun MainScaffold(
                 when (tab) {
                 0 -> HomeScreen(onLogout = onLogout, onAbsen = onAbsen, refreshKey = refreshKey)
                 1 -> RiwayatScreen(refreshKey = refreshKey)
-                else -> GaleriScreen(refreshKey = refreshKey)
+                2 -> GaleriScreen(refreshKey = refreshKey)
+                else -> ProfilScreen(onLogout = onLogout)
             }
         }
     }
