@@ -43,7 +43,7 @@ data class HomeUiState(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val repo: HomeRepository,
-    private val auth: AuthRepository
+    private val auth: AuthRepository,
     private val tokenStore: TokenStore
 ) : ViewModel() {
 
