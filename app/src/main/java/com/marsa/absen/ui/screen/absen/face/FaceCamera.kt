@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
@@ -192,158 +191,227 @@ fun FaceCamera(
      * jika server mengizinkan.
      */
     LaunchedEffect(Unit) {
+
         delay(25_000)
+
         showManual = true
     }
 
+    /*
+     * ==================================================
+     * LAYOUT UTAMA
+     * ==================================================
+     *
+     * Kamera berada di atas.
+     * Monitor berada DI LUAR area kamera.
+     * Jadi monitor tidak menutupi wajah.
+     */
     Column(
-    modifier = modifier
-) {
-
-    // =========================
-    // AREA KAMERA
-    // =========================
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .weight(1f)
+        modifier = modifier
     ) {
-
-        AndroidView(
-            factory = { ctx ->
-                PreviewView(ctx).apply {
-                    controller = cam
-                    scaleType = PreviewView.ScaleType.FILL_CENTER
-                }
-            },
-            modifier = Modifier.fillMaxSize()
-        )
 
         /*
-         * Kotak tracking wajah.
-         * Oval panduan dihapus.
+         * ==================================================
+         * AREA KAMERA
+         * ==================================================
          */
-        FaceOverlay(
-            ui = ui,
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // =========================
-        // ATAS: INSTRUKSI + TAHAP
-        // =========================
-        Column(
+        Box(
             modifier = Modifier
-                .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .weight(1f)
         ) {
 
-            val headline = when (ui.phase) {
+            AndroidView(
+                factory = { ctx ->
 
-                Phase.CHALLENGE ->
-                    ui.hint +
-                        (
-                            ui.secondsLeft
-                                ?.let { "  (${it}d)" }
-                                ?: ""
-                        )
+                    PreviewView(ctx).apply {
 
-                else -> ui.hint
-            }
+                        controller = cam
 
-            Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = Color.Black.copy(alpha = 0.55f)
-            ) {
-                Text(
-                    text = headline,
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(
-                        horizontal = 16.dp,
-                        vertical = 8.dp
-                    )
-                )
-            }
-
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = Color.Black.copy(alpha = 0.45f)
-            ) {
-                Text(
-                    text = stageLabel(ui),
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(
-                        horizontal = 12.dp,
-                        vertical = 4.dp
-                    )
-                )
-            }
-
-            LinearProgressIndicator(
-                progress = {
-                    ui.overall
+                        scaleType =
+                            PreviewView.ScaleType.FILL_CENTER
+                    }
                 },
+
+                modifier = Modifier.fillMaxSize()
+            )
+
+            /*
+             * Kotak tracking wajah.
+             *
+             * Oval panduan sudah dihapus.
+             */
+            FaceOverlay(
+                ui = ui,
+                modifier = Modifier.fillMaxSize()
+            )
+
+            /*
+             * ==================================================
+             * ATAS: INSTRUKSI + TAHAP + PROGRESS
+             * ==================================================
+             */
+            Column(
                 modifier = Modifier
+                    .align(Alignment.TopCenter)
                     .fillMaxWidth()
-                    .clip(CircleShape)
-            )
-        }
-    }
+                    .padding(12.dp),
 
-    // =========================
-    // AREA MONITOR
-    // =========================
-    if (showMonitor) {
-        MonitorPanel(ui)
-    }
+                horizontalAlignment =
+                    Alignment.CenterHorizontally,
 
-    // =========================
-    // TOMBOL
-    // =========================
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = 12.dp,
-                vertical = 4.dp
-            ),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-
-        TextButton(
-            onClick = {
-                showMonitor = !showMonitor
-            }
-        ) {
-            Text(
-                text = if (showMonitor) {
-                    "Sembunyikan monitor"
-                } else {
-                    "Tampilkan monitor"
-                },
-                color = Color.White
-            )
-        }
-
-        if (manualAllowed && showManual) {
-            TextButton(
-                onClick = onManual
+                verticalArrangement =
+                    Arrangement.spacedBy(8.dp)
             ) {
+
+                val headline =
+                    when (ui.phase) {
+
+                        Phase.CHALLENGE ->
+                            ui.hint +
+                                (
+                                    ui.secondsLeft
+                                        ?.let {
+                                            "  (${it}d)"
+                                        }
+                                        ?: ""
+                                )
+
+                        else ->
+                            ui.hint
+                    }
+
+                Surface(
+                    shape =
+                        RoundedCornerShape(20.dp),
+
+                    color =
+                        Color.Black.copy(alpha = 0.55f)
+                ) {
+
+                    Text(
+                        text = headline,
+
+                        color = Color.White,
+
+                        style =
+                            MaterialTheme.typography.titleMedium,
+
+                        textAlign =
+                            TextAlign.Center,
+
+                        modifier =
+                            Modifier.padding(
+                                horizontal = 16.dp,
+                                vertical = 8.dp
+                            )
+                    )
+                }
+
+                Surface(
+                    shape =
+                        RoundedCornerShape(12.dp),
+
+                    color =
+                        Color.Black.copy(alpha = 0.45f)
+                ) {
+
+                    Text(
+                        text = stageLabel(ui),
+
+                        color = Color.White,
+
+                        style =
+                            MaterialTheme.typography.labelLarge,
+
+                        modifier =
+                            Modifier.padding(
+                                horizontal = 12.dp,
+                                vertical = 4.dp
+                            )
+                    )
+                }
+
+                LinearProgressIndicator(
+                    progress = {
+                        ui.overall
+                    },
+
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(CircleShape)
+                )
+            }
+        }
+
+        /*
+         * ==================================================
+         * MONITOR
+         * ==================================================
+         *
+         * Monitor berada di bawah kamera.
+         * Tidak lagi overlay ke preview.
+         */
+        if (showMonitor) {
+            MonitorPanel(ui)
+        }
+
+        /*
+         * ==================================================
+         * TOMBOL
+         * ==================================================
+         */
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 12.dp,
+                    vertical = 4.dp
+                ),
+
+            horizontalArrangement =
+                Arrangement.spacedBy(8.dp),
+
+            verticalAlignment =
+                Alignment.CenterVertically
+        ) {
+
+            TextButton(
+                onClick = {
+                    showMonitor = !showMonitor
+                }
+            ) {
+
                 Text(
-                    text = "Foto manual",
+                    text =
+                        if (showMonitor) {
+                            "Sembunyikan monitor"
+                        } else {
+                            "Tampilkan monitor"
+                        },
+
                     color = Color.White
                 )
+            }
+
+            if (
+                manualAllowed &&
+                showManual
+            ) {
+
+                TextButton(
+                    onClick = onManual
+                ) {
+
+                    Text(
+                        text = "Foto manual",
+                        color = Color.White
+                    )
+                }
             }
         }
     }
 }
-
 /*
  * =========================
  * STAGE LABEL
