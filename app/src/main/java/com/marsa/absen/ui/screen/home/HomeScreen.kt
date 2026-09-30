@@ -62,6 +62,7 @@ import com.marsa.absen.util.toHhmm
 import com.marsa.absen.util.todayLabel
 import kotlinx.coroutines.delay
 import java.time.LocalTime
+import androidx.compose.foundation.layout.WindowInsets
 
 private val PERMISSIONS = arrayOf(
     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -105,7 +106,10 @@ fun HomeScreen(
         onPauseOrDispose { }
     }
 
-    Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { padding ->
         PullToRefreshBox(
             isRefreshing = state.refreshing,
             onRefresh = {
