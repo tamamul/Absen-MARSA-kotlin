@@ -9,6 +9,11 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+// Penandatanganan rilis: diisi otomatis oleh GitHub Actions dari Secrets.
+val keystorePath: String? = System.getenv("KEYSTORE_PATH")
+val hasKeystore: Boolean = keystorePath != null && file(keystorePath).exists()
+val runNumber: Int = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
+
 android {
     namespace = "com.marsa.absen"
     compileSdk = 36
@@ -17,11 +22,29 @@ android {
         applicationId = "com.marsa.absen"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = runNumber
+        versionName = "1.0.$runNumber"
+
+        // Hanya ARM (HP asli). Mengecilkan APK karena model ML Kit membawa library native.
+        ndk { abiFilters += listOf("armeabi-v7a", "arm64-v8a") }
+    }
+
+    signingConfigs {
+        if (hasKeystore) {
+            create("release") {
+                storeFile = file(keystorePath!!)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
+        debug {
+            // Tanda tangan sama dengan rilis agar build baru bisa menimpa yang lama
+            if (hasKeystore) signingConfig = signingConfigs.getByName("release")
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -29,6 +52,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Tanpa keystore: pakai kunci debug (hanya untuk uji, tidak bisa untuk pembaruan berkelanjutan)
+            signingConfig = if (hasKeystore) signingConfigs.getByName("release")
+            else signingConfigs.getByName("debug")
         }
     }
 
@@ -38,6 +64,19 @@ android {
     }
 
     buildFeatures { compose = true }
+
+    // Peringatan lint non-kritis tidak boleh menggagalkan build rilis
+    lint { checkReleaseBuilds = false }
+
+    packaging {
+        resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+    }
 }
 
 dependencies {
@@ -74,10 +113,5 @@ dependencies {
 
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.coil.compose)
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
-    }
+    implementation(libs.androidx.profileinstaller)
 }
