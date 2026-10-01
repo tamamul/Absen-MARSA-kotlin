@@ -351,8 +351,8 @@ private fun MonitorLine(text: String) {
         text = text,
         color = Color.White,
         fontFamily = FontFamily.Monospace,
-        fontSize = 10.sp,
-        lineHeight = 6.sp,          // <- tinggi per baris, makin kecil makin rapat
+        fontSize = 8.sp,
+        lineHeight = 3.sp,          // <- tinggi per baris, makin kecil makin rapat
         maxLines = 1,
         overflow = TextOverflow.Ellipsis
     )
