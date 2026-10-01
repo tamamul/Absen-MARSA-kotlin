@@ -265,7 +265,6 @@ fun FaceCamera(
     }
 }
     }
-}
 
 private fun stageLabel(ui: LivenessUi): String {
     return when (ui.phase) {
