@@ -12,8 +12,8 @@
     <group
         android:pivotX="180"
         android:pivotY="190"
-        android:scaleX="0.88"
-        android:scaleY="0.88"
+        android:scaleX="0.76"
+        android:scaleY="0.76"
         android:translateY="8">
 
         <!-- ========================= -->
