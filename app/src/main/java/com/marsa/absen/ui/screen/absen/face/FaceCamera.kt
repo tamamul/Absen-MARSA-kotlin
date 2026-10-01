@@ -54,10 +54,6 @@ import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.ClipOp
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
@@ -287,41 +283,16 @@ private fun FaceOverlay(
     }
 
     Canvas(modifier = modifier) {
-        // Oval panduan di tengah (sedikit ke atas)
-        val ovalW = size.width * 0.68f
-        val ovalH = ovalW * 1.3f
-        val ovalRect = Rect(
-            offset = Offset(
-                (size.width - ovalW) / 2f,
-                (size.height - ovalH) / 2f - size.height * 0.04f
-            ),
-            size = Size(ovalW, ovalH)
-        )
-
-        // Area gelap di luar oval
-        val hole = Path().apply { addOval(ovalRect) }
-        clipPath(hole, clipOp = ClipOp.Difference) {
-            drawRect(Color.Black.copy(alpha = 0.35f))
-        }
-
-        drawOval(
-            color = color,
-            topLeft = ovalRect.topLeft,
-            size = ovalRect.size,
-            style = Stroke(3.dp.toPx())
-        )
-
-        // Kotak deteksi wajah (mirror horizontal untuk kamera depan)
         ui.metrics.box?.let { b ->
             val left = (1f - b.right) * size.width
             val right = (1f - b.left) * size.width
 
             drawRoundRect(
-                color = color.copy(alpha = 0.7f),
+                color = color.copy(alpha = 0.9f),
                 topLeft = Offset(left, b.top * size.height),
                 size = Size(right - left, (b.bottom - b.top) * size.height),
                 cornerRadius = CornerRadius(12.dp.toPx()),
-                style = Stroke(1.5.dp.toPx())
+                style = Stroke(2.dp.toPx())
             )
         }
     }
@@ -345,12 +316,12 @@ private fun MonitorPanel(
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(10.dp),
         color = Color.Black.copy(alpha = 0.6f)
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp)
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp)   // <- jarak antar baris
         ) {
             MonitorLine(
                 "Wajah ${m.faceCount}" +
@@ -381,6 +352,7 @@ private fun MonitorLine(text: String) {
         color = Color.White,
         fontFamily = FontFamily.Monospace,
         fontSize = 10.sp,
+        lineHeight = 9.sp,          // <- tinggi per baris, makin kecil makin rapat
         maxLines = 1,
         overflow = TextOverflow.Ellipsis
     )
