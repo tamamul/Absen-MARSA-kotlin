@@ -45,6 +45,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.marsa.absen.R
 
 @Composable
 fun LoginScreen(vm: LoginViewModel = hiltViewModel()) {
@@ -85,22 +88,12 @@ fun LoginScreen(vm: LoginViewModel = hiltViewModel()) {
         ) {
 
             // Logo
-            Surface(
-                shape = MaterialTheme.shapes.extraLarge,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(88.dp)
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Fingerprint,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(48.dp)
-                    )
-                }
-            }
+            // Logo MARSA
+Image(
+    painter = painterResource(id = R.drawable.logo_marsa),
+    contentDescription = "Logo Absen Marsa",
+    modifier = Modifier.size(100.dp)
+)
 
             // Judul
             Text(
