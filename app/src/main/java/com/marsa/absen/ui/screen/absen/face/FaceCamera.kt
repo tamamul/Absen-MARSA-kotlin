@@ -320,7 +320,7 @@ private fun MonitorPanel(
         color = Color.Black.copy(alpha = 0.6f)
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)   // <- jarak antar baris
         ) {
             MonitorLine(
@@ -352,7 +352,7 @@ private fun MonitorLine(text: String) {
         color = Color.White,
         fontFamily = FontFamily.Monospace,
         fontSize = 10.sp,
-        lineHeight = 9.sp,          // <- tinggi per baris, makin kecil makin rapat
+        lineHeight = 6.sp,          // <- tinggi per baris, makin kecil makin rapat
         maxLines = 1,
         overflow = TextOverflow.Ellipsis
     )
