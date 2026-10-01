@@ -54,6 +54,11 @@ import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
 fun FaceCamera(
@@ -147,116 +152,118 @@ fun FaceCamera(
         showManual = true
     }
 
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+   Column(
+    modifier = modifier,
+    verticalArrangement = Arrangement.spacedBy(8.dp)
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(3f / 4f)
+            .clip(RoundedCornerShape(20.dp))
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(4f / 3f)
-                .clip(RoundedCornerShape(18.dp))
-        ) {
-            AndroidView(
-                factory = { ctx ->
-                    PreviewView(ctx).apply {
-                        controller = cam
-                        scaleType = PreviewView.ScaleType.FILL_CENTER
-                    }
-                },
-                modifier = Modifier.fillMaxSize()
-            )
-
-            FaceOverlay(
-                ui = ui,
-                modifier = Modifier.fillMaxSize()
-            )
-
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .padding(10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color.Black.copy(alpha = 0.48f)
-                ) {
-                    Text(
-                        text = when (ui.phase) {
-                            Phase.CHALLENGE -> {
-                                ui.hint +
-                                    (ui.secondsLeft?.let { " • ${it}d" } ?: "")
-                            }
-                            else -> ui.hint
-                        },
-                        color = Color.White,
-                        fontSize = 13.sp,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                        modifier = Modifier.padding(
-                            horizontal = 12.dp,
-                            vertical = 6.dp
-                        )
-                    )
+        AndroidView(
+            factory = { ctx ->
+                PreviewView(ctx).apply {
+                    controller = cam
+                    scaleType = PreviewView.ScaleType.FILL_CENTER
                 }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
 
+        FaceOverlay(
+            ui = ui,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // Header: petunjuk + tahap + progress
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = Color.Black.copy(alpha = 0.55f)
+            ) {
+                Text(
+                    text = when (ui.phase) {
+                        Phase.CHALLENGE ->
+                            ui.hint + (ui.secondsLeft?.let { " • ${it}d" } ?: "")
+                        else -> ui.hint
+                    },
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(
+                        horizontal = 16.dp,
+                        vertical = 8.dp
+                    )
+                )
+            }
+
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = Color.Black.copy(alpha = 0.4f)
+            ) {
                 Text(
                     text = stageLabel(ui),
-                    color = Color.White.copy(alpha = 0.9f),
-                    fontSize = 10.sp,
-                    modifier = Modifier
-                        .padding(top = 4.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .padding(horizontal = 8.dp, vertical = 2.dp)
-                )
-
-                LinearProgressIndicator(
-                    progress = { ui.overall },
-                    modifier = Modifier
-                        .fillMaxWidth(0.72f)
-                        .padding(top = 4.dp)
-                        .clip(CircleShape)
-                )
-            }
-        }
-
-        if (showMonitor) {
-            MonitorPanel(ui)
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextButton(
-                onClick = {
-                    showMonitor = !showMonitor
-                }
-            ) {
-                Text(
-                    text = if (showMonitor) {
-                        "Sembunyikan monitor"
-                    } else {
-                        "Tampilkan monitor"
-                    },
-                    fontSize = 12.sp
-                )
-            }
-
-            if (manualAllowed && showManual) {
-                TextButton(onClick = onManual) {
-                    Text(
-                        text = "Foto manual",
-                        fontSize = 12.sp
+                    color = Color.White,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(
+                        horizontal = 10.dp,
+                        vertical = 3.dp
                     )
-                }
+                )
+            }
+
+            LinearProgressIndicator(
+                progress = { ui.overall },
+                color = Color(0xFF4CAF50),
+                trackColor = Color.White.copy(alpha = 0.3f),
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .clip(CircleShape)
+            )
+        }
+
+        // Monitor sebagai overlay di bawah kamera
+        if (showMonitor) {
+            MonitorPanel(
+                ui = ui,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(10.dp)
+            )
+        }
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        TextButton(onClick = { showMonitor = !showMonitor }) {
+            Text(
+                text = if (showMonitor) "Sembunyikan monitor" else "Tampilkan monitor",
+                fontSize = 13.sp
+            )
+        }
+
+        if (manualAllowed && showManual) {
+            TextButton(onClick = onManual) {
+                Text(text = "Foto manual", fontSize = 13.sp)
             }
         }
+    }
+}
     }
 }
 
@@ -281,22 +288,41 @@ private fun FaceOverlay(
     }
 
     Canvas(modifier = modifier) {
+        // Oval panduan di tengah (sedikit ke atas)
+        val ovalW = size.width * 0.68f
+        val ovalH = ovalW * 1.3f
+        val ovalRect = Rect(
+            offset = Offset(
+                (size.width - ovalW) / 2f,
+                (size.height - ovalH) / 2f - size.height * 0.04f
+            ),
+            size = Size(ovalW, ovalH)
+        )
+
+        // Area gelap di luar oval
+        val hole = Path().apply { addOval(ovalRect) }
+        clipPath(hole, clipOp = ClipOp.Difference) {
+            drawRect(Color.Black.copy(alpha = 0.35f))
+        }
+
+        drawOval(
+            color = color,
+            topLeft = ovalRect.topLeft,
+            size = ovalRect.size,
+            style = Stroke(3.dp.toPx())
+        )
+
+        // Kotak deteksi wajah (mirror horizontal untuk kamera depan)
         ui.metrics.box?.let { b ->
             val left = (1f - b.right) * size.width
             val right = (1f - b.left) * size.width
 
             drawRoundRect(
-                color = color.copy(alpha = 0.9f),
-                topLeft = Offset(
-                    left,
-                    b.top * size.height
-                ),
-                size = Size(
-                    right - left,
-                    (b.bottom - b.top) * size.height
-                ),
-                cornerRadius = CornerRadius(14.dp.toPx()),
-                style = Stroke(2.dp.toPx())
+                color = color.copy(alpha = 0.7f),
+                topLeft = Offset(left, b.top * size.height),
+                size = Size(right - left, (b.bottom - b.top) * size.height),
+                cornerRadius = CornerRadius(12.dp.toPx()),
+                style = Stroke(1.5.dp.toPx())
             )
         }
     }
@@ -309,52 +335,54 @@ private fun pct(v: Float?): String {
 }
 
 @Composable
-private fun MonitorPanel(ui: LivenessUi) {
+private fun MonitorPanel(
+    ui: LivenessUi,
+    modifier: Modifier = Modifier
+) {
     val m = ui.metrics
     val c = ui.checks
 
     fun Boolean.mark() = if (this) "✓" else "✗"
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         shape = RoundedCornerShape(12.dp),
-        color = Color.Black.copy(alpha = 0.65f)
+        color = Color.Black.copy(alpha = 0.6f)
     ) {
         Column(
-            modifier = Modifier.padding(
-                horizontal = 10.dp,
-                vertical = 7.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
-            Text(
-                text =
-                    "Wajah ${m.faceCount}" +
-                    "${m.trackingId?.let { " • ID $it" } ?: ""}" +
-                    " • ${ui.fps} fps" +
-                    " • Ukuran ${((m.box?.height ?: 0f) * 100).roundToInt()}% ${c.size.mark()}" +
-                    " • Tengah ${c.centered.mark()}" +
-                    " • Lurus ${c.frontal.mark()}",
-                color = Color.White,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 8.sp,
-                maxLines = 1
+            MonitorLine(
+                "Wajah ${m.faceCount}" +
+                    (m.trackingId?.let { " • ID $it" } ?: "") +
+                    " • ${ui.fps} fps"
             )
-
-            Text(
-                text =
-                    "Mata ${c.eyesOpen.mark()}" +
-                    " • Stabil ${c.stable.mark()}" +
-                    " • Yaw ${m.yaw.roundToInt()}°" +
-                    " • Pitch ${m.pitch.roundToInt()}°" +
-                    " • Roll ${m.roll.roundToInt()}°" +
-                    " • L ${pct(m.leftEye)}" +
-                    " • R ${pct(m.rightEye)}",
-                color = Color.White,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 8.sp,
-                maxLines = 1
+            MonitorLine(
+                "Ukuran ${((m.box?.height ?: 0f) * 100).roundToInt()}% ${c.size.mark()}" +
+                    " • Tengah ${c.centered.mark()}" +
+                    " • Lurus ${c.frontal.mark()}"
+            )
+            MonitorLine(
+                "Mata ${c.eyesOpen.mark()} • Stabil ${c.stable.mark()}" +
+                    " • L ${pct(m.leftEye)} • R ${pct(m.rightEye)}"
+            )
+            MonitorLine(
+                "Yaw ${m.yaw.roundToInt()}° • Pitch ${m.pitch.roundToInt()}°" +
+                    " • Roll ${m.roll.roundToInt()}°"
             )
         }
     }
+}
+
+@Composable
+private fun MonitorLine(text: String) {
+    Text(
+        text = text,
+        color = Color.White,
+        fontFamily = FontFamily.Monospace,
+        fontSize = 10.sp,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
 }
