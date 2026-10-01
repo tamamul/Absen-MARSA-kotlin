@@ -48,6 +48,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import com.marsa.absen.R
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.Spacer
 
 @Composable
 fun LoginScreen(vm: LoginViewModel = hiltViewModel()) {
