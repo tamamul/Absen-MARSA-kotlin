@@ -99,7 +99,7 @@ fun LoginScreen(vm: LoginViewModel = hiltViewModel()) {
         Image(
             painter = painterResource(id = R.drawable.logo_marsa),
             contentDescription = "Logo Absen Marsa",
-            modifier = Modifier.size(85.dp)
+            modifier = Modifier.size(95.dp)
         )
     }
 }
