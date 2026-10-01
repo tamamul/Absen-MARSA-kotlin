@@ -109,6 +109,13 @@ fun LoginScreen(vm: LoginViewModel = hiltViewModel()) {
                 color = MaterialTheme.colorScheme.onBackground
             )
 
+Text(
+                text = "SMK MA'ARIF 9 KEBUMEN",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,          
+            )
+
             Text(
                 text = "Masuk untuk mulai mencatat kehadiran",
                 style = MaterialTheme.typography.bodyMedium,
