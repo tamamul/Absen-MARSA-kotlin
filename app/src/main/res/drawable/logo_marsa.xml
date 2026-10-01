@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Gunung kiri -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="
+            M39.0,18.0
+            L0.0,74.0
+            L23.0,74.0
+            L50.0,42.0
+            Z" />
+
+    <!-- Gunung utama -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="
+            M72.0,0.0
+            L39.0,42.0
+            L52.0,69.0
+            L72.5,45.0
+            L91.0,74.0
+            L108.0,74.0
+            Z" />
+
+</vector>
