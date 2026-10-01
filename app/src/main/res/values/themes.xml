@@ -8,7 +8,7 @@
     <!-- Tema saat aplikasi baru dibuka (splash), lalu berganti ke Theme.AbsenMarsa -->
     <style name="Theme.AbsenMarsa.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/logo_marsa</item>
         <item name="postSplashScreenTheme">@style/Theme.AbsenMarsa</item>
     </style>
 </resources>
