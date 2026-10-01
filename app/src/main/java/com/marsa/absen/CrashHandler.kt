@@ -6,7 +6,11 @@ import android.util.Log
 import kotlin.system.exitProcess
 
 object CrashHandler {
+    /** Matikan (false) setelah aplikasi dinyatakan stabil. */
+    const val ENABLED = true
+
     fun install(app: Application) {
+        if (!ENABLED) return
         Thread.setDefaultUncaughtExceptionHandler { _, e ->
             try {
                 val trace = Log.getStackTraceString(e).take(20000)
