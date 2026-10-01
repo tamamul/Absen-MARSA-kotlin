@@ -278,38 +278,9 @@ private fun GaleriCard(item: GaleriItem, showKeluar: Boolean, onClick: () -> Uni
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                if (jam.cleanTime() != null) {
-                    Surface(
-                        shape = MaterialTheme.shapes.small,
-                        color = Color.Black.copy(alpha = 0.55f),
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(8.dp)
-                    ) {
-                        Text(
-                            text = jam.toHhmm(),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = Color.White,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                        )
-                    }
-                }
+         
             }
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text(
-                    text = item.nama ?: "-",
-                    style = MaterialTheme.typography.titleSmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = item.jabatan.orEmpty(),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+          
         }
     }
 }
@@ -411,12 +382,12 @@ private fun PhotoViewer(item: GaleriItem, initialKeluar: Boolean, onClose: () ->
                     FilterChip(
                         selected = !keluar,
                         onClick = { keluar = false },
-                        label = { Text("Masuk ${item.jamMasuk.toHhmm()}") }
+                        label = { Text("Foto masuk") }
                     )
                     FilterChip(
                         selected = keluar,
                         onClick = { keluar = true },
-                        label = { Text("Pulang ${item.jamKeluar.toHhmm()}") }
+                        label = { Text("Foto pulang") }
                     )
                 }
             }
