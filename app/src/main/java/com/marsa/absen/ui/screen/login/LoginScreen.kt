@@ -16,7 +16,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -48,6 +47,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import com.marsa.absen.R
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun LoginScreen(vm: LoginViewModel = hiltViewModel()) {
@@ -88,12 +88,21 @@ fun LoginScreen(vm: LoginViewModel = hiltViewModel()) {
         ) {
 
             // Logo
-            // Logo MARSA
-Image(
-    painter = painterResource(id = R.drawable.logo_marsa),
-    contentDescription = "Logo Absen Marsa",
-    modifier = Modifier.size(100.dp)
-)
+ Surface(
+    shape = MaterialTheme.shapes.extraLarge,
+    color = Color(0xFF008B9A),
+    modifier = Modifier.size(110.dp)
+) {
+    Box(
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.logo_marsa),
+            contentDescription = "Logo Absen Marsa",
+            modifier = Modifier.size(85.dp)
+        )
+    }
+}
 
             // Judul
             Text(
