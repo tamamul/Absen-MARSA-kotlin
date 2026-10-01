@@ -18,7 +18,7 @@ import kotlin.math.roundToInt
 
 /** Ambang pemeriksaan foto. Ubah jika terlalu ketat (foto bagus ditolak) atau terlalu longgar. */
 object QualityConfig {
-    const val MIN_SHARPNESS = 45f     // varians Laplacian pada area wajah
+    const val MIN_SHARPNESS = 30f     // varians Laplacian pada area wajah
     const val MIN_BRIGHTNESS = 50f    // rata-rata terang 0..255
     const val MAX_BRIGHTNESS = 215f
     const val MIN_FACE_HEIGHT = 0.30f // tinggi wajah / tinggi foto
