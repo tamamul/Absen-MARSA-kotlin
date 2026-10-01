@@ -104,28 +104,36 @@ fun LoginScreen(vm: LoginViewModel = hiltViewModel()) {
     }
 }
 
-            // Judul
-            Text(
-                text = "Absen Marsa",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            Column(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalAlignment = Alignment.CenterHorizontally
+) {
+    Text(
+        text = "Absen Marsa",
+        style = MaterialTheme.typography.headlineMedium,
+        color = MaterialTheme.colorScheme.onBackground,
+        textAlign = TextAlign.Center
+    )
 
-Text(
-                text = "SMK MA'ARIF 9 KEBUMEN",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,          
-            )
+    Spacer(modifier = Modifier.height(4.dp))
 
-            Text(
-                text = "Masuk untuk mulai mencatat kehadiran",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
+    Text(
+        text = "SMK MA'ARIF 9 KEBUMEN",
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center
+    )
 
+    Spacer(modifier = Modifier.height(4.dp))
+
+    Text(
+        text = "Masuk untuk mulai mencatat kehadiran",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.padding(bottom = 12.dp)
+    )
+}
             // Username / Email
             OutlinedTextField(
                 value = login,
