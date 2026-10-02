@@ -63,7 +63,3 @@ Syarat: Android 8.0 ke atas, kamera depan, GPS, dan koneksi internet.
 ## Kredit
 
 Desain antarmuka terinspirasi dari [Driftly](https://github.com/dp-hridayan/Driftly). Kode aplikasi ditulis sendiri untuk kebutuhan sekolah.
-
-## Lisensi
-
-Isi lisensi proyek di sini.
