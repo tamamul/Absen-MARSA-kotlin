@@ -10,7 +10,7 @@ Aplikasi absensi Android untuk pegawai sekolah. Absen masuk dan pulang dari HP: 
 
 ## Unduh
 
-Unduh APK terbaru di **[halaman unduhan](GANTI-DENGAN-LINK-HALAMAN-DOWNLOAD)** atau di tab **Actions** repo ini (artifact `AbsenMarsa-release`).
+Unduh APK terbaru di **[halaman unduhan](https://smk-maarif9kebumen.com/download/)** atau di tab **Actions** repo ini (artifact `AbsenMarsa-release`).
 
 Syarat: Android 8.0 ke atas, kamera depan, GPS, dan koneksi internet.
 
