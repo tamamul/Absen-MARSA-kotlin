@@ -64,6 +64,9 @@ import kotlinx.coroutines.delay
 import java.time.LocalTime
 import androidx.compose.foundation.layout.WindowInsets
 import com.marsa.absen.ui.components.Avatar
+import androidx.compose.material.icons.filled.Schedule
+import com.marsa.absen.domain.model.PiketAktif
+import com.marsa.absen.util.toDateTimeLabel
 
 private val PERMISSIONS = arrayOf(
     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -81,6 +84,7 @@ fun HomeScreen(
 ) {
     val state = vm.state
     val location = vm.location
+    val piket = vm.piket
     val context = LocalContext.current
     var confirmLogout by rememberSaveable { mutableStateOf(false) }
 
@@ -104,6 +108,7 @@ fun HomeScreen(
     }
     LifecycleResumeEffect(Unit) {
         vm.checkLocationIfStale()
+        vm.refreshPiket()
         onPauseOrDispose { }
     }
 
@@ -137,6 +142,7 @@ fun HomeScreen(
                     state = state,
                     profil = profil,
                     location = location,
+                    piket = piket,
                     now = now,
                     onLogoutClick = { confirmLogout = true },
                     onAbsenClick = {
@@ -185,6 +191,7 @@ private fun HomeContent(
     state: HomeUiState,
     profil: PegawaiProfil,
     location: LocationCheck,
+    piket: PiketAktif?,
     now: LocalTime,
     onLogoutClick: () -> Unit,
     onAbsenClick: () -> Unit,
@@ -238,7 +245,7 @@ private fun HomeContent(
                 modifier = Modifier.padding(start = 8.dp)
             )
         }
-
+        if (piket != null) PiketCard(piket)
         ScheduleCard(profil)
     }
 }
@@ -492,5 +499,61 @@ private fun ErrorState(message: String, onRetry: () -> Unit, onLogout: () -> Uni
         )
         Button(onClick = onRetry) { Text("Coba lagi") }
         TextButton(onClick = onLogout) { Text("Keluar") }
+    }
+}
+
+@Composable
+private fun PiketCard(piket: PiketAktif) {
+    Card(
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(Icons.Filled.Schedule, contentDescription = null)
+                Text("Jadwal piket aktif", style = MaterialTheme.typography.titleMedium)
+            }
+            Text(piket.namaLokasi ?: "-", style = MaterialTheme.typography.headlineMedium)
+
+            PiketLine("Mulai", piket.mulai.toDateTimeLabel())
+            PiketLine("Selesai", piket.selesai.toDateTimeLabel())
+            PiketLine("Batas absen pulang", piket.tutup.toDateTimeLabel())
+
+            if (!piket.keterangan.isNullOrBlank()) {
+                Text(piket.keterangan, style = MaterialTheme.typography.bodyMedium)
+            }
+
+            Button(
+                onClick = {},
+                enabled = false,
+                shape = MaterialTheme.shapes.large,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            ) { Text("Absen piket segera tersedia") }
+        }
+    }
+}
+
+@Composable
+private fun PiketLine(label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f)
+        )
+        Text(text = value, style = MaterialTheme.typography.bodyMedium)
     }
 }
