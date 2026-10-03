@@ -64,6 +64,9 @@ fun MarsaRoot(session: SessionViewModel = hiltViewModel()) {
                         onAbsen = { mode, profil, pre ->
                             absenRequest = AbsenRequest(mode, profil, pre)
                         },
+                        onAbsenPiket = { mode, profil ->
+                            absenRequest = AbsenRequest(mode, profil, null, piket = true)
+                        },
                         refreshKey = refreshKey
                     )
                 } else {
@@ -84,6 +87,7 @@ fun MarsaRoot(session: SessionViewModel = hiltViewModel()) {
 private fun MainScaffold(
     onLogout: () -> Unit,
     onAbsen: (AbsenMode, PegawaiProfil, LocationCheck.Inside?) -> Unit,
+    onAbsenPiket: (AbsenMode, PegawaiProfil) -> Unit,
     refreshKey: Int
 ) {
     var tab by rememberSaveable { mutableStateOf(0) }
@@ -126,7 +130,12 @@ private fun MainScaffold(
                 .fillMaxSize()
         ) {
                 when (tab) {
-                0 -> HomeScreen(onLogout = onLogout, onAbsen = onAbsen, refreshKey = refreshKey)
+                0 -> HomeScreen(
+                    onLogout = onLogout,
+                    onAbsen = onAbsen,
+                    onAbsenPiket = onAbsenPiket,
+                    refreshKey = refreshKey
+                )
                 1 -> RiwayatScreen(refreshKey = refreshKey)
                 2 -> GaleriScreen(refreshKey = refreshKey)
                 else -> ProfilScreen(onLogout = onLogout)
