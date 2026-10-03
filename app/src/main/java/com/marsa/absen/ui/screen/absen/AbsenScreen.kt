@@ -127,8 +127,13 @@ fun AbsenScreen(
     val success = state.step == AbsenStep.DONE && state.success
     BackHandler(enabled = state.step != AbsenStep.SUBMITTING) { onClose(success) }
 
-    val title = if (request.mode == AbsenMode.MASUK) "Absen Masuk" else "Absen Pulang"
-
+    val title = when {
+        request.piket && request.mode == AbsenMode.MASUK -> "Absen Piket Masuk"
+        request.piket -> "Absen Piket Pulang"
+        request.mode == AbsenMode.MASUK -> "Absen Masuk"
+        else -> "Absen Pulang"
+    }
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -175,7 +180,7 @@ fun AbsenScreen(
 
                     AbsenStep.LOCATION_ERROR -> LocationErrorContent(
                         state = state,
-                        namaLokasi = request.profil.namaLokasi,
+                        namaLokasi = if (request.piket) null else request.profil.namaLokasi,
                         onRetry = vm::locate
                     )
 
