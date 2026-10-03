@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import java.time.LocalTime
 import javax.inject.Inject
+import com.marsa.absen.data.repository.PiketRepository
+import com.marsa.absen.domain.model.PiketAktif
 
 enum class AbsenStatus { BELUM_MASUK, SUDAH_MASUK, SELESAI }
 
@@ -62,13 +64,15 @@ class HomeViewModel @Inject constructor(
     private val repo: HomeRepository,
     private val auth: AuthRepository,
     private val tokenStore: TokenStore,
-    private val verifier: LocationVerifier
+    private val verifier: LocationVerifier,
+    private val piketRepo: PiketRepository
 ) : ViewModel() {
 
     var state by mutableStateOf(HomeUiState())
         private set
 
     var location by mutableStateOf<LocationCheck>(LocationCheck.Idle)
+    var piket by mutableStateOf<PiketAktif?>(null)
         private set
 
     private var locationJob: Job? = null
@@ -80,6 +84,7 @@ class HomeViewModel @Inject constructor(
                     locationJob?.cancel()
                     state = HomeUiState()
                     location = LocationCheck.Idle
+                    piket = null
                 } else {
                     load()
                 }
@@ -88,6 +93,16 @@ class HomeViewModel @Inject constructor(
     }
 
     fun refresh() = load()
+
+    fun refreshPiket() {
+        viewModelScope.launch {
+            when (val r = piketRepo.status()) {
+                is ApiResult.Success -> piket = r.data.aktif
+                is ApiResult.Error -> if (r.code == 401) auth.logout()
+                // gangguan jaringan lain: pertahankan tampilan terakhir
+            }
+        }
+    }
 
     fun hasLocationPermission(): Boolean = verifier.hasPermission()
 
@@ -115,6 +130,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun load() {
+        refreshPiket()
         viewModelScope.launch {
             val firstLoad = state.profil == null
             state = state.copy(loading = firstLoad, refreshing = !firstLoad, error = null)
