@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalTime
 import javax.inject.Inject
 import com.marsa.absen.data.repository.PiketRepository
-import com.marsa.absen.domain.model.PiketAktif
+import com.marsa.absen.domain.model.PiketStatus
 
 enum class AbsenStatus { BELUM_MASUK, SUDAH_MASUK, SELESAI }
 
@@ -72,7 +72,7 @@ class HomeViewModel @Inject constructor(
         private set
 
     var location by mutableStateOf<LocationCheck>(LocationCheck.Idle)
-    var piket by mutableStateOf<PiketAktif?>(null)
+    var piket by mutableStateOf<PiketStatus?>(null)
         private set
 
     private var locationJob: Job? = null
@@ -97,7 +97,7 @@ class HomeViewModel @Inject constructor(
     fun refreshPiket() {
         viewModelScope.launch {
             when (val r = piketRepo.status()) {
-                is ApiResult.Success -> piket = r.data.aktif
+                is ApiResult.Success -> piket = r.data
                 is ApiResult.Error -> if (r.code == 401) auth.logout()
                 // gangguan jaringan lain: pertahankan tampilan terakhir
             }
