@@ -20,19 +20,21 @@ class AbsenRepository @Inject constructor(
     private val api: MarsaApi
 ) {
 
-    suspend fun cekLokasi(lat: Double, lng: Double): ApiResult<JsonElement> =
+    suspend fun cekLokasi(lat: Double, lng: Double, piket: Boolean = false): ApiResult<JsonElement> =
         apiCall {
-            api.cekLokasi(buildJsonObject {
+            val body = buildJsonObject {
                 put("latitude", lat.toString())
                 put("longitude", lng.toString())
-            })
+            }
+            if (piket) api.cekLokasiPiket(body) else api.cekLokasi(body)
         }
 
     suspend fun kirim(
         mode: AbsenMode,
         lat: Double,
         lng: Double,
-        foto: File
+        foto: File,
+        piket: Boolean = false
     ): ApiResult<JsonElement> {
         val text = "text/plain".toMediaType()
         val latBody = lat.toString().toRequestBody(text)
@@ -44,9 +46,11 @@ class AbsenRepository @Inject constructor(
             body = foto.asRequestBody("image/jpeg".toMediaType())
         )
         return apiCall {
-            when (mode) {
-                AbsenMode.MASUK -> api.absenMasuk(latBody, lngBody, part)
-                AbsenMode.KELUAR -> api.absenKeluar(latBody, lngBody, part)
+            when {
+                piket && mode == AbsenMode.MASUK -> api.piketMasuk(latBody, lngBody, part)
+                piket -> api.piketKeluar(latBody, lngBody, part)
+                mode == AbsenMode.MASUK -> api.absenMasuk(latBody, lngBody, part)
+                else -> api.absenKeluar(latBody, lngBody, part)
             }
         }
     }
