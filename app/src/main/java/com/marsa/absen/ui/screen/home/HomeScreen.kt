@@ -79,6 +79,7 @@ private val PERMISSIONS = arrayOf(
 fun HomeScreen(
     onLogout: () -> Unit,
     onAbsen: (AbsenMode, PegawaiProfil, LocationCheck.Inside?) -> Unit,
+    onAbsenPiket: (AbsenMode, PegawaiProfil) -> Unit,
     refreshKey: Int = 0,
     vm: HomeViewModel = hiltViewModel()
 ) {
