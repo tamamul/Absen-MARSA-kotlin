@@ -33,7 +33,7 @@ class LocationVerifier @Inject constructor(
         ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
 
-    suspend fun verify(): LocationCheck {
+    suspend fun verify(piket: Boolean = false): LocationCheck {
         if (!hasPermission()) return LocationCheck.NoPermission
 
         val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -51,7 +51,7 @@ class LocationVerifier @Inject constructor(
             )
         }
 
-        return when (val r = repo.cekLokasi(loc.latitude, loc.longitude)) {
+        return when (val r = repo.cekLokasi(loc.latitude, loc.longitude, piket)) {
             is ApiResult.Error ->
                 if (r.code == 401) LocationCheck.Unauthorized else LocationCheck.Problem(r.message)
 
