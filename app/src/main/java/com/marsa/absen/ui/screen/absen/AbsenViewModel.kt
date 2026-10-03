@@ -55,7 +55,7 @@ class AbsenViewModel @Inject constructor(
         request = req
 
         val pre = req.pre
-        if (pre != null && pre.isFresh()) {
+        if (!req.piket && pre != null && pre.isFresh()) {
             // Lokasi sudah terverifikasi di beranda: langsung tampilkan kamera,
             // sambil memperbarui lokasi di latar belakang.
             state = AbsenUiState(step = AbsenStep.CAMERA, loc = pre, verifying = true)
@@ -76,7 +76,7 @@ class AbsenViewModel @Inject constructor(
     fun locate() {
         viewModelScope.launch {
             state = AbsenUiState(step = AbsenStep.LOCATING)
-            applyResult(verifier.verify(), silent = false)
+            applyResult(verifier.verify(request?.piket == true), silent = false)
         }
     }
 
@@ -178,11 +178,12 @@ class AbsenViewModel @Inject constructor(
 
         viewModelScope.launch {
             state = state.copy(step = AbsenStep.SUBMITTING, message = null)
-            when (val r = repo.kirim(req.mode, loc.lat, loc.lng, photo)) {
+            when (val r = repo.kirim(req.mode, loc.lat, loc.lng, photo, req.piket)) {
                 is ApiResult.Success -> {
                     val ok = r.data.serverStatus() != false
+                    val label = if (req.piket) "Absen piket" else "Absen"
                     val defaultOk =
-                        if (req.mode == AbsenMode.MASUK) "Absen masuk berhasil." else "Absen pulang berhasil."
+                        if (req.mode == AbsenMode.MASUK) "$label masuk berhasil." else "$label pulang berhasil."
                     state = state.copy(
                         step = AbsenStep.DONE,
                         success = ok,
