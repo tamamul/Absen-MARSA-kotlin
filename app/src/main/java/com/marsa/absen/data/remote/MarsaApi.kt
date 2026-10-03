@@ -77,4 +77,23 @@ interface MarsaApi {
 
     @GET("api/absen/piket/status")
     suspend fun piketStatus(): Response<JsonElement>
+
+    @POST("api/absen/piket/cek-lokasi")
+    suspend fun cekLokasiPiket(@Body body: JsonObject): Response<JsonElement>
+
+    @Multipart
+    @POST("api/absen/piket/masuk")
+    suspend fun piketMasuk(
+        @Part("latitude") latitude: RequestBody,
+        @Part("longitude") longitude: RequestBody,
+        @Part foto: MultipartBody.Part
+    ): Response<JsonElement>
+
+    @Multipart
+    @POST("api/absen/piket/keluar")
+    suspend fun piketKeluar(
+        @Part("latitude") latitude: RequestBody,
+        @Part("longitude") longitude: RequestBody,
+        @Part foto: MultipartBody.Part
+    ): Response<JsonElement>
 }
