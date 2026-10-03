@@ -73,5 +73,8 @@ interface MarsaApi {
         @Part("latitude") latitude: RequestBody,
         @Part("longitude") longitude: RequestBody,
         @Part foto: MultipartBody.Part
-    ): Response<JsonElement>    
+    ): Response<JsonElement>
+
+    @GET("api/absen/piket/status")
+    suspend fun piketStatus(): Response<JsonElement>
 }
