@@ -65,7 +65,7 @@ import java.time.LocalTime
 import androidx.compose.foundation.layout.WindowInsets
 import com.marsa.absen.ui.components.Avatar
 import androidx.compose.material.icons.filled.Schedule
-import com.marsa.absen.domain.model.PiketAktif
+import com.marsa.absen.domain.model.PiketStatus
 import com.marsa.absen.util.toDateTimeLabel
 
 private val PERMISSIONS = arrayOf(
@@ -143,6 +143,7 @@ fun HomeScreen(
                     profil = profil,
                     location = location,
                     piket = piket,
+                    onAbsenPiket = { mode -> onAbsenPiket(mode, profil) },
                     now = now,
                     onLogoutClick = { confirmLogout = true },
                     onAbsenClick = {
@@ -191,7 +192,8 @@ private fun HomeContent(
     state: HomeUiState,
     profil: PegawaiProfil,
     location: LocationCheck,
-    piket: PiketAktif?,
+    piket: PiketStatus?,
+    onAbsenPiket: (AbsenMode) -> Unit,
     now: LocalTime,
     onLogoutClick: () -> Unit,
     onAbsenClick: () -> Unit,
@@ -245,7 +247,7 @@ private fun HomeContent(
                 modifier = Modifier.padding(start = 8.dp)
             )
         }
-        if (piket != null) PiketCard(piket)
+        piket?.let { if (it.aktif != null) PiketCard(it, onAbsenPiket) }
         ScheduleCard(profil)
     }
 }
@@ -503,7 +505,14 @@ private fun ErrorState(message: String, onRetry: () -> Unit, onLogout: () -> Uni
 }
 
 @Composable
-private fun PiketCard(piket: PiketAktif) {
+private fun PiketCard(status: PiketStatus, onAbsen: (AbsenMode) -> Unit) {
+    val aktif = status.aktif ?: return
+    val (label, enabled, mode) = when {
+        status.bisaKeluar -> Triple("Absen Piket Pulang", true, AbsenMode.KELUAR)
+        status.bisaMasuk -> Triple("Absen Piket Masuk", true, AbsenMode.MASUK)
+        else -> Triple("Absen piket tidak tersedia", false, AbsenMode.MASUK)
+    }
+
     Card(
         shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
@@ -524,24 +533,28 @@ private fun PiketCard(piket: PiketAktif) {
                 Icon(Icons.Filled.Schedule, contentDescription = null)
                 Text("Jadwal piket aktif", style = MaterialTheme.typography.titleMedium)
             }
-            Text(piket.namaLokasi ?: "-", style = MaterialTheme.typography.headlineMedium)
+            Text(aktif.namaLokasi ?: "-", style = MaterialTheme.typography.headlineMedium)
 
-            PiketLine("Mulai", piket.mulai.toDateTimeLabel())
-            PiketLine("Selesai", piket.selesai.toDateTimeLabel())
-            PiketLine("Batas absen pulang", piket.tutup.toDateTimeLabel())
+            PiketLine("Mulai", aktif.mulai.toDateTimeLabel())
+            PiketLine("Selesai", aktif.selesai.toDateTimeLabel())
+            PiketLine("Batas absen pulang", aktif.tutup.toDateTimeLabel())
+            status.absen?.let { PiketLine("Absen masuk piket", it.jamMasuk.toHhmm()) }
 
-            if (!piket.keterangan.isNullOrBlank()) {
-                Text(piket.keterangan, style = MaterialTheme.typography.bodyMedium)
+            if (!aktif.keterangan.isNullOrBlank()) {
+                Text(aktif.keterangan, style = MaterialTheme.typography.bodyMedium)
+            }
+            if (!enabled && !status.alasan.isNullOrBlank()) {
+                Text(status.alasan, style = MaterialTheme.typography.bodyMedium)
             }
 
             Button(
-                onClick = {},
-                enabled = false,
+                onClick = { onAbsen(mode) },
+                enabled = enabled,
                 shape = MaterialTheme.shapes.large,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
-            ) { Text("Absen piket segera tersedia") }
+            ) { Text(label) }
         }
     }
 }
