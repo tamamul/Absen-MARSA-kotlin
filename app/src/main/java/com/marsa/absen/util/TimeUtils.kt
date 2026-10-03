@@ -5,6 +5,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import java.time.LocalDateTime
 
 private val ID = Locale.forLanguageTag("id-ID")
 
@@ -46,4 +47,10 @@ fun String?.initials(): String {
         parts.size == 1 -> parts[0].take(1).uppercase()
         else -> (parts[0].take(1) + parts[1].take(1)).uppercase()
     }
+}
+/** "2026-10-03 18:19:00" -> "Sab, 3 Okt 18:19" */
+fun String?.toDateTimeLabel(): String {
+    val s = this?.trim()?.takeIf { it.isNotEmpty() } ?: return "-"
+    val t = runCatching { LocalDateTime.parse(s.replace(' ', 'T')) }.getOrNull() ?: return "-"
+    return t.format(DateTimeFormatter.ofPattern("EEE, d MMM HH:mm", ID))
 }
