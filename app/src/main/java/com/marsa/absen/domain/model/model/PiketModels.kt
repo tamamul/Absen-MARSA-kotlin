@@ -7,7 +7,18 @@ import kotlinx.serialization.Serializable
 data class PiketStatus(
     @SerialName("waktu_server") val waktuServer: String? = null,
     val aktif: PiketAktif? = null,
+    val absen: PiketAbsen? = null,
+    @SerialName("bisa_masuk") val bisaMasuk: Boolean = false,
+    @SerialName("bisa_keluar") val bisaKeluar: Boolean = false,
+    val alasan: String? = null,
     val jadwal: List<PiketJadwal> = emptyList()
+)
+
+@Serializable
+data class PiketAbsen(
+    val id: String? = null,
+    @SerialName("tanggal_masuk") val tanggalMasuk: String? = null,
+    @SerialName("jam_masuk") val jamMasuk: String? = null
 )
 
 @Serializable
