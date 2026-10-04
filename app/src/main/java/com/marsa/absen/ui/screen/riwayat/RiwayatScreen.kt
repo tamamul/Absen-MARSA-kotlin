@@ -113,8 +113,6 @@ fun RiwayatScreen(
                         .padding(horizontal = 20.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text("Riwayat Absen", style = MaterialTheme.typography.headlineMedium)
-
                     if (state.error != null) {
                         Text(
                             text = state.error,
