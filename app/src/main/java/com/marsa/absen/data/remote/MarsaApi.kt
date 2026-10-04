@@ -96,4 +96,7 @@ interface MarsaApi {
         @Part("longitude") longitude: RequestBody,
         @Part foto: MultipartBody.Part
     ): Response<JsonElement>
+
+    @GET("api/absen/piket/riwayat")
+    suspend fun piketRiwayat(@Query("limit") limit: Int): Response<JsonElement>
 }
