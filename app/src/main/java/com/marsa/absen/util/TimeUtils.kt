@@ -54,3 +54,17 @@ fun String?.toDateTimeLabel(): String {
     val t = runCatching { LocalDateTime.parse(s.replace(' ', 'T')) }.getOrNull() ?: return "-"
     return t.format(DateTimeFormatter.ofPattern("EEE, d MMM HH:mm", ID))
 }
+/** "2026-10-04" -> "4 Okt" */
+fun String?.toShortDate(): String {
+    val d = this.cleanDate()?.take(10)
+        ?.let { s -> runCatching { LocalDate.parse(s) }.getOrNull() } ?: return "-"
+    return d.format(DateTimeFormatter.ofPattern("d MMM", ID))
+}
+
+/** 725 -> "12 j 5 m"; 45 -> "45 m"; null -> "-" */
+fun formatDurasi(menit: Int?): String {
+    if (menit == null || menit < 0) return "-"
+    val j = menit / 60
+    val m = menit % 60
+    return if (j > 0) "$j j $m m" else "$m m"
+}
