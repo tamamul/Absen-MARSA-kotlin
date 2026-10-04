@@ -9,6 +9,8 @@ object PhotoUrl {
 
     fun masuk(name: String?): String? = build(PRESENSI + "masuk/", name)
     fun keluar(name: String?): String? = build(PRESENSI + "keluar/", name)
+    fun piketMasuk(name: String?): String? = build(PRESENSI + "piketmasuk/", name)
+    fun piketKeluar(name: String?): String? = build(PRESENSI + "piketkeluar/", name)
     fun profil(name: String?): String? = build(PROFIL, name)
 
     private fun build(path: String, name: String?): String? {
