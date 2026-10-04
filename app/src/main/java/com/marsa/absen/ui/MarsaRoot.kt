@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.PhotoLibrary
 import com.marsa.absen.ui.screen.galeri.GaleriScreen
 import androidx.compose.material.icons.filled.Person
 import com.marsa.absen.ui.screen.profil.ProfilScreen
+import com.marsa.absen.ui.screen.riwayat.RiwayatTab
 
 @Composable
 fun MarsaRoot(session: SessionViewModel = hiltViewModel()) {
@@ -136,7 +137,7 @@ private fun MainScaffold(
                     onAbsenPiket = onAbsenPiket,
                     refreshKey = refreshKey
                 )
-                1 -> RiwayatScreen(refreshKey = refreshKey)
+                1 -> RiwayatTab(refreshKey = refreshKey)
                 2 -> GaleriScreen(refreshKey = refreshKey)
                 else -> ProfilScreen(onLogout = onLogout)
             }
