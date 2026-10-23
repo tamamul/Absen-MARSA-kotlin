@@ -55,10 +55,13 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
 
 @Composable
 fun FaceCamera(
     manualAllowed: Boolean,
+    level: LevelWajah,
     onPhoto: (File) -> Unit,
     onFailure: (String) -> Unit,
     onManual: () -> Unit,
@@ -71,6 +74,16 @@ fun FaceCamera(
     val captureGuard = remember { AtomicBoolean(false) }
     var showMonitor by rememberSaveable { mutableStateOf(true) }
     var showManual by remember { mutableStateOf(false) }
+    var bioOk by remember { mutableStateOf(level != LevelWajah.SIDIK_JARI) }
+LaunchedEffect(level) {
+    if (level == LevelWajah.SIDIK_JARI) {
+        tanyaSidikJari(
+            context as androidx.fragment.app.FragmentActivity,
+            onOk = { bioOk = true },
+            onGagal = { currentOnFailure(it) }
+        )
+    }
+}
     val currentOnPhoto by rememberUpdatedState(onPhoto)
     val currentOnFailure by rememberUpdatedState(onFailure)
 
@@ -97,9 +110,7 @@ fun FaceCamera(
 
             ui = next
 
-            if (
-                next.readyToCapture &&
-                captureGuard.compareAndSet(false, true)
+            if (next.readyToCapture && bioOk && captureGuard.compareAndSet(false, true)
             ) {
                 val file = File.createTempFile(
                     "absen_",
@@ -356,4 +367,20 @@ private fun MonitorLine(text: String) {
         maxLines = 1,
         overflow = TextOverflow.Ellipsis
     )
+}
+
+private fun tanyaSidikJari(
+    a: androidx.fragment.app.FragmentActivity,
+    onOk: () -> Unit, onGagal: (String) -> Unit
+) {
+    val info = BiometricPrompt.PromptInfo.Builder()
+        .setTitle("Verifikasi sidik jari")
+        .setNegativeButtonText("Batal")
+        .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK)
+        .build()
+    BiometricPrompt(a, ContextCompat.getMainExecutor(a),
+        object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(r: BiometricPrompt.AuthenticationResult) = onOk()
+            override fun onAuthenticationError(code: Int, msg: CharSequence) = onGagal(msg.toString())
+        }).authenticate(info)
 }
