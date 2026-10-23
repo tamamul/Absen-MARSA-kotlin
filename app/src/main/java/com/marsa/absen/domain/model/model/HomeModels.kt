@@ -20,7 +20,8 @@ data class PegawaiProfil(
     @SerialName("jam_pulang_maksimal") val jamPulangMaksimal: String? = null,
     @SerialName("mode_absen") val modeAbsen: String? = null,
     @SerialName("face_recognition") val faceRecognition: String? = null,
-    @SerialName("face_required") val faceRequired: String? = null
+    @SerialName("face_required") val faceRequired: String? = null,
+    @SerialName("level_wajah") val levelWajah: Int = 1
 )
 
 @Serializable
