@@ -79,15 +79,17 @@ fun FaceCamera(
     val currentOnFailure by rememberUpdatedState(onFailure)
 
     var bioOk by remember { mutableStateOf(level != LevelWajah.SIDIK_JARI) }
-LaunchedEffect(level) {
-    if (level == LevelWajah.SIDIK_JARI) {
-        tanyaSidikJari(
-            context as androidx.fragment.app.FragmentActivity,
-            onOk = { bioOk = true },
-            onGagal = { currentOnFailure(it) }
-        )
+    LaunchedEffect(level) {
+        if (level == LevelWajah.SIDIK_JARI) {
+            val act = context.cariActivity()
+            if (act == null) currentOnFailure("Sidik jari tidak tersedia")
+            else tanyaSidikJari(
+                act,
+                onOk = { bioOk = true },
+                onGagal = { currentOnFailure(it) }
+            )
+        }
     }
-}
     val cam = remember {
         LifecycleCameraController(context).apply {
             cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
@@ -384,4 +386,12 @@ private fun tanyaSidikJari(
             override fun onAuthenticationSucceeded(r: BiometricPrompt.AuthenticationResult) = onOk()
             override fun onAuthenticationError(code: Int, msg: CharSequence) = onGagal(msg.toString())
         }).authenticate(info)
+}
+private fun android.content.Context.cariActivity(): androidx.fragment.app.FragmentActivity? {
+    var c = this
+    while (c is android.content.ContextWrapper) {
+        if (c is androidx.fragment.app.FragmentActivity) return c
+        c = c.baseContext
+    }
+    return null
 }
