@@ -2,6 +2,7 @@ package com.marsa.absen.ui.screen.absen.face
 
 import kotlin.math.abs
 import kotlin.math.hypot
+import com.marsa.absen.domain.model.LevelWajah
 
 /** Semua ambang batas ada di sini; ubah jika terlalu ketat atau longgar di HP-mu. */
 object LivenessConfig {
@@ -26,7 +27,7 @@ object LivenessConfig {
     const val FRONT_ROLL = 15f
 }
 
-class LivenessEngine {
+class LivenessEngine(private val level: LevelWajah = LevelWajah.PENUH) {
 
     private var phase = Phase.ALIGN
     private var challenge: Challenge? = null
@@ -86,10 +87,16 @@ class LivenessEngine {
                 else ((now - alignSince) / LivenessConfig.ALIGN_MS.toFloat()).coerceIn(0f, 1f)
                 hint = positionHint(m, checks)
                 if (alignSince != 0L && now - alignSince >= LivenessConfig.ALIGN_MS) {
-                    phase = Phase.CHALLENGE
-                    pickChallenge(now)
-                }
-            }
+    if (level == LevelWajah.TENANG || level == LevelWajah.SIDIK_JARI) {
+        phase = Phase.HOLD          // lewati tantangan
+        holdSince = 0L
+        holdStart = now
+        hint = "Tahan… jangan bergerak"
+    } else {
+        phase = Phase.CHALLENGE
+        pickChallenge(now)
+    }
+}
 
             Phase.CHALLENGE -> progress = stepChallenge(m, now)
             Phase.HOLD -> progress = stepHold(m, checks, now)
@@ -235,7 +242,8 @@ class LivenessEngine {
     }
 
     private fun pickChallenge(now: Long) {
-        val options = Challenge.entries.filter { it != lastChallenge }
+        val options = if (level == LevelWajah.KEDIP) listOf(Challenge.BLINK)
+		else Challenge.entries.filter { it != lastChallenge }
         val next = options.random()
         challenge = next
         lastChallenge = next
