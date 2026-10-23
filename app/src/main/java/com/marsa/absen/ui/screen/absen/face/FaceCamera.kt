@@ -106,7 +106,8 @@ fun FaceCamera(
         val executor = Executors.newSingleThreadExecutor()
 
         val analyzer = FaceAnalyzer { metrics ->
-            val next = engine.onFrame(
+    if (!bioOk) return@FaceAnalyzer     // <-- baris baru
+    val next = engine.onFrame(
                 metrics,
                 SystemClock.elapsedRealtime()
             )
