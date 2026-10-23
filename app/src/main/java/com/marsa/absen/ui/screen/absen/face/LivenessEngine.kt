@@ -97,7 +97,7 @@ class LivenessEngine(private val level: LevelWajah = LevelWajah.PENUH) {
         pickChallenge(now)
     }
 }
-
+}
             Phase.CHALLENGE -> progress = stepChallenge(m, now)
             Phase.HOLD -> progress = stepHold(m, checks, now)
             Phase.CAPTURING -> progress = 1f
