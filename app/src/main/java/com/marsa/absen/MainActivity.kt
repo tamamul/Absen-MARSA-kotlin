@@ -25,9 +25,10 @@ import com.marsa.absen.ui.SettingsViewModel
 import com.marsa.absen.ui.theme.MarsaTheme
 import com.marsa.absen.ui.theme.ThemeMode
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.fragment.app.FragmentActivity
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() { 
 
     private val session: SessionViewModel by viewModels()
     private val settingsVm: SettingsViewModel by viewModels()
