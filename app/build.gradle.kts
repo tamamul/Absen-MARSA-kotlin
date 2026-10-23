@@ -114,4 +114,5 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.coil.compose)
     implementation(libs.androidx.profileinstaller)
+implementation("androidx.biometric:biometric:1.1.0")
 }
