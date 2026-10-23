@@ -69,6 +69,7 @@ import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.marsa.absen.ui.screen.absen.face.FaceCamera
+import com.marsa.absen.domain.model.LevelWajah
 
 private fun Context.findActivity(): Activity? {
     var c: Context = this
@@ -212,6 +213,7 @@ fun AbsenScreen(
         } else {
             FaceCamera(
                 manualAllowed = request.profil.faceRequired != "1",
+                level = LevelWajah.dari(request.profil.levelWajah),  
                 onPhoto = vm::onPhotoCaptured,
                 onFailure = vm::onCameraError,
                 onManual = { manual = true },
