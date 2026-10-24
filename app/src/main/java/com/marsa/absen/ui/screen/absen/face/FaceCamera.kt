@@ -70,7 +70,7 @@ fun FaceCamera(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val engine = remember { LivenessEngine() }
+    val engine = remember(level) { LivenessEngine(level) }
     var ui by remember { mutableStateOf(LivenessUi()) }
     val captureGuard = remember { AtomicBoolean(false) }
     var showMonitor by rememberSaveable { mutableStateOf(true) }
@@ -102,7 +102,7 @@ fun FaceCamera(
         }
     }
 
-    DisposableEffect(lifecycleOwner) {
+    DisposableEffect(lifecycleOwner, engine) {
         val executor = Executors.newSingleThreadExecutor()
 
         val analyzer = FaceAnalyzer { metrics ->
@@ -224,7 +224,7 @@ fun FaceCamera(
                 color = Color.Black.copy(alpha = 0.4f)
             ) {
                 Text(
-                    text = stageLabel(ui),
+                    text = stageLabel(ui) + " • L${level.ordinal + 1}",
                     color = Color.White,
                     fontSize = 11.sp,
                     modifier = Modifier.padding(
